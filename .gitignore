@@ -1,0 +1,34 @@
+# Python environment and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.env
+
+# Raw datasets and generated data
+data/raw/
+data/processed/
+data/features/
+
+# Generated experiment outputs
+artifacts/models/*
+artifacts/metrics/*
+artifacts/figures/*
+logs/*
+!artifacts/models/.gitkeep
+!artifacts/metrics/.gitkeep
+!artifacts/figures/.gitkeep
+!logs/.gitkeep
+
+# Local temporary files
+tmp/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
