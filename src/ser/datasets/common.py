@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 from enum import Enum
+from typing import Protocol
 
 @dataclass
 class AudioMetadata:
@@ -39,6 +40,24 @@ class FailedFile:
 class ParseResult:
     metadata: list[AudioMetadata]
     failed_files: list[FailedFile]
+
+class BaseParser(Protocol):
+    def parse(self) -> "ParseResult":
+        ...
+
+@dataclass
+class DatasetStatistics:
+    total_files: int
+    speakers: list[str]
+    total_speakers: int
+
+    sample_rates: list[int]
+
+    min_duration: float
+    max_duration: float
+    mean_duration: float
+
+    emotion_distribution: dict[str, int]
 
 # RAVDESS Emotion Label Mapping
 RAVDESS_EMOTION_MAP = {

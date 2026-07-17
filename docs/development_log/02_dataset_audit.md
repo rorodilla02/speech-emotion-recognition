@@ -25,12 +25,24 @@ Struktur project telah disesuaikan dengan pendekatan modular.
 ```
 src/
 └── ser/
-    └── datasets/
-        ├── common.py
-        ├── ravdess.py
-        ├── tess.py
-        ├── savee.py
-        └── inesco.py
+    ├── audit/
+    │   └── auditor.py
+    │
+    ├── datasets/
+    │   ├── common.py
+    │   ├── ravdess.py
+    │   ├── tess.py
+    │   ├── savee.py
+    │   └── inesco.py
+    │
+    ├── output/
+    │   └── writer.py
+    │
+    ├── statistics/
+    │   └── generator.py
+    │
+    └── utils/
+        └── audio.py
 ```
 
 ---
@@ -109,6 +121,34 @@ Seluruh mapping digunakan untuk mengubah label asli dataset menjadi label emosi 
 
 ---
 
+### BaseParser
+
+Digunakan sebagai abstract interface seluruh parser dataset.
+
+Method:
+
+- parse()
+
+---
+
+### DatasetStatistics
+
+Digunakan untuk menyimpan hasil statistik setiap dataset.
+
+Field:
+
+- dataset
+- total_files
+- speakers
+- total_speakers
+- sample_rates
+- min_duration
+- max_duration
+- mean_duration
+- emotion_distribution
+
+---
+
 # Dataset Parser
 
 Status:
@@ -123,6 +163,60 @@ Parser yang telah selesai:
 - INESCO
 
 Seluruh parser memiliki interface yang sama dan mengembalikan ParseResult.
+
+---
+
+# Audio Reader
+
+Status:
+
+✅ Selesai
+
+Fungsi:
+
+- membaca sample rate
+- membaca durasi audio
+- mengisi AudioMetadata
+- melempar RuntimeError apabila audio gagal dibaca
+
+---
+
+# Statistics Generator
+
+✅ Selesai
+
+Menghasilkan statistik setiap dataset.
+
+Statistik meliputi:
+
+- jumlah file
+- jumlah speaker
+- sample rate unik
+- durasi minimum
+- durasi maksimum
+- durasi rata-rata
+- distribusi emosi
+
+---
+
+# Output Writer
+
+Status:
+
+✅ Selesai
+
+Bertanggung jawab menghasilkan seluruh output audit.
+
+Output yang dihasilkan:
+
+- audit_summary.csv
+- audit_summary.json
+- dataset_statistics.csv
+- file_inventory.csv
+- emotion_distribution.csv
+- failed_files.csv
+- label_mapping.csv
+- audit_report.md
 
 ---
 
@@ -177,27 +271,27 @@ Setiap parser memiliki konstanta DATASET_NAME untuk menghindari hardcoded string
 
 ## Audio
 
-- [ ] Audio Reader
+- [x] Audio Reader
 
 ---
 
 ## Auditor
 
-- [ ] Dataset Auditor
+- [x] Dataset Auditor
 
 ---
 
 ## Statistics
 
-- [ ] Statistics Generator
+- [x] Statistics Generator
 
 ---
 
 ## Output Writer
 
-- [ ] CSV Writer
-- [ ] JSON Writer
-- [ ] Markdown Report
+- [x] CSV Writer
+- [x] JSON Writer
+- [x] Markdown Report
 
 ---
 
@@ -227,10 +321,9 @@ Folder metadata nantinya akan menghasilkan:
 
 Target implementasi berikutnya:
 
-1. Implementasi Audio Reader
-2. Implementasi Dataset Auditor
-3. Implementasi Statistics Generator
-4. Implementasi Output Writer
+1. Implementasi Entry Point (01_dataset_audit.py)
+2. Generate seluruh metadata
+3. Verifikasi output audit
 
 ---
 
@@ -255,7 +348,18 @@ Semua implementasi saat ini hanya berfokus pada proses audit dataset.
 - Parser hanya membaca metadata dari filename.
 - Parser tidak membaca isi audio.
 - Pembacaan audio dipisahkan ke Audio Reader.
+- Audio Reader hanya membaca informasi metadata audio (sample rate dan duration).
+- Audio Reader tidak melakukan preprocessing.
 - Seluruh parser menggunakan ParseResult sebagai output.
+- DatasetAuditor juga menggunakan ParseResult sebagai output.
 - Seluruh parser menggunakan dataclass bersama pada common.py.
 - Seluruh parser memiliki mekanisme error handling yang sama.
 - Seluruh parser menggunakan DATASET_NAME untuk menghindari hardcoded string.
+- DatasetAuditor bertugas mengintegrasikan hasil parser dan Audio Reader.
+- AudioReader bertanggung jawab membaca isi file audio.
+- DatasetAuditor mengorkestrasi parser dan AudioReader.
+- StatisticsGenerator hanya menghitung statistik tanpa menulis output.
+- StatisticsGenerator hanya menghasilkan statistik dan tidak melakukan penulisan file.
+- OutputWriter bertanggung jawab menghasilkan seluruh artefak output audit.
+- Setiap komponen memiliki single responsibility.
+- Seluruh output dihasilkan melalui OutputWriter agar proses ekspor tetap terpusat.
