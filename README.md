@@ -1,65 +1,137 @@
 # Speech Emotion Recognition using CNN and Feature Fusion for Cross-Corpus Evaluation
 
-This repository contains the implementation of a Speech Emotion Recognition
-(SER) system developed as part of an undergraduate thesis.
+This repository contains the implementation of a Speech Emotion Recognition (SER)
+system developed as part of an undergraduate thesis.
 
-The project follows the CRISP-DM methodology and focuses on building a
-cross-corpus CNN-based emotion recognition model using feature fusion of
-MFCC, Delta MFCC, Delta-Delta MFCC, and Chroma features.
+The project follows the **CRISP-DM** methodology and focuses on building a
+cross-corpus CNN-based emotion recognition model using feature fusion of:
 
-## Project layout
+- MFCC
+- Delta MFCC
+- Delta-Delta MFCC
+- Chroma
+
+for emotion classification across multiple public SER datasets.
+
+---
+
+# Project Layout
 
 ```text
 app/                  Streamlit application
 artifacts/            Generated models, metrics, and figures (not committed)
+
 configs/              Reproducible experiment settings
+
 data/
-  raw/                Original extracted datasets (not committed)
-  processed/          Cleaned/intermediate audio data (not committed)
-  features/           Extracted feature arrays (not committed)
-  metadata/           Dataset inventories and file-level metadata
-docs/                 Technical project notes
+├── raw/              Original extracted datasets (not committed)
+├── processed/        Cleaned datasets (not committed)
+├── features/         Extracted feature arrays (not committed)
+└── metadata/         Dataset audit outputs
+
+docs/                 Technical documentation
 scripts/              Runnable pipeline entry points
-src/ser/              Reusable SER Python package
+src/ser/              Reusable SER package
 tests/                Automated tests
 ```
 
-## Dataset rule
+---
 
-Store ZIP files in `data/raw/archives/` and extract each corpus to its own
-folder under `data/raw/`. Preserve all original audio filenames and directory
-structures. Label standardization belongs in metadata, never in renamed files.
+# Dataset Rule
 
-See `docs/dataset_inventory.md` and `data/metadata/dataset_inventory.csv`
-before adding a dataset.
+Store compressed archives inside:
 
-## Project Status
+```
+data/raw/archives/
+```
 
-Current phase:
+Extract each dataset into its own directory under:
 
-✔ Data Understanding
+```
+data/raw/
+```
 
-Current milestone:
+Do **not** rename or modify original filenames.
 
-Dataset Audit
+Label standardization is performed by the dataset parser during metadata generation,
+not by changing the original dataset.
 
-## Tech Stack
+---
+
+# Current Project Status
+
+Current CRISP-DM Phase
+
+✅ Data Understanding
+
+Current Milestone
+
+✅ Dataset Audit
+
+Next Milestone
+
+⬜ Data Preparation
+
+---
+
+# Implemented Components
+
+- ✅ Dataset Parser
+- ✅ Audio Reader
+- ✅ Dataset Auditor
+- ✅ Statistics Generator
+- ✅ Output Writer
+
+Generated outputs:
+
+- audit_summary.csv
+- audit_summary.json
+- dataset_statistics.csv
+- file_inventory.csv
+- emotion_distribution.csv
+- failed_files.csv
+- label_mapping.csv
+- audit_report.md
+
+---
+
+# Technology Stack
 
 - Python
 - TensorFlow / Keras
-- Librosa
 - SoundFile
+- Librosa
 - Pandas
 - NumPy
 - Streamlit
 
-## Development Roadmap
+---
 
-- [x] Project initialization
+# Development Roadmap
+
+## Data Understanding
+
 - [x] Dataset parser
-- [ ] Audio reader
-- [ ] Dataset auditor
+- [x] Audio reader
+- [x] Dataset auditor
+- [x] Statistics generator
+- [x] Output writer
+
+## Data Preparation
+
+- [ ] Audio preprocessing
+- [ ] Dataset validation
 - [ ] Feature extraction
+
+## Modeling
+
 - [ ] CNN training
+- [ ] Hyperparameter tuning
+
+## Evaluation
+
 - [ ] Cross-corpus evaluation
-- [ ] Streamlit deployment
+
+## Deployment
+
+- [ ] Streamlit application
