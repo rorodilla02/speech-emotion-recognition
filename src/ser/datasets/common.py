@@ -47,6 +47,7 @@ class BaseParser(Protocol):
 
 @dataclass
 class DatasetStatistics:
+    dataset: str
     total_files: int
     speakers: list[str]
     total_speakers: int
