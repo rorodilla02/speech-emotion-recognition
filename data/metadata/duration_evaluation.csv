@@ -1,0 +1,5 @@
+dataset,total_files,padding_files,padding_pct,cropping_files,cropping_pct,unchanged_files,unchanged_pct,mean_padding,mean_cropping
+ravdess,1440,1185,82.29,255,17.71,0,0.0,0.343,0.044
+tess,2800,2800,100.0,0,0.0,0,0.0,1.945,0.0
+savee,480,296,61.67,184,38.33,0,0.0,0.527,0.366
+Combined,4720,4281,90.7,439,9.3,0,0.0,1.312,0.051

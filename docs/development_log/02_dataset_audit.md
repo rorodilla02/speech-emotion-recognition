@@ -231,7 +231,7 @@ Audit berhasil dijalankan terhadap seluruh dataset.
 Hasil eksekusi:
 
 - Total dataset: 4
-- Total file berhasil diaudit: 9918
+- Total file berhasil diaudit: 7118
 - Total file gagal dibaca: 1
 - Total speaker terdeteksi: 35
 

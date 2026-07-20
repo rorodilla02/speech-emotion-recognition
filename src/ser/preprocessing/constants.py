@@ -1,0 +1,10 @@
+TRAINING_DATASETS = (
+    "ravdess",
+    "tess",
+    "savee",
+)
+
+TARGET_SAMPLE_RATE = 16_000
+TARGET_RMS = 0.1
+TARGET_DURATION = 4.0
+TRIM_TOP_DB = 30

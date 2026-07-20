@@ -62,25 +62,25 @@ not by changing the original dataset.
 
 Current CRISP-DM Phase
 
-✅ Data Understanding
+Data Understanding
 
 Current Milestone
 
-✅ Dataset Audit
+Dataset Audit
 
 Next Milestone
 
-⬜ Data Preparation
+Data Preparation
 
 ---
 
 # Implemented Components
 
-- ✅ Dataset Parser
-- ✅ Audio Reader
-- ✅ Dataset Auditor
-- ✅ Statistics Generator
-- ✅ Output Writer
+- Dataset Parser
+- Audio Reader
+- Dataset Auditor
+- Statistics Generator
+- Output Writer
 
 Generated outputs:
 

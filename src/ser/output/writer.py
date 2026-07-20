@@ -248,3 +248,15 @@ class OutputWriter:
         self.write_emotion_distribution(statistics_list)
         self.write_label_mapping()
         self.write_report(result, statistics_list)
+
+    def write_duration_summary(self, summary: pd.DataFrame) -> Path:
+        output_path = self._output_path("duration_summary.csv")
+        summary.to_csv(output_path, index=False)
+
+        return output_path
+    
+    def write_duration_evaluation(self, summary: pd.DataFrame) -> Path:
+        output_path = self._output_path("duration_evaluation.csv")
+        summary.to_csv(output_path, index=False)
+
+        return output_path
