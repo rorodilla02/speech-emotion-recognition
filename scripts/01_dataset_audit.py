@@ -21,7 +21,7 @@ def main():
     ]
 
     audio_reader = AudioReader()
-    auditor = DatasetAuditor(audio_reader)
+    auditor = DatasetAuditor(audio_reader=audio_reader, raw_root=RAW_DIR)
     statistics_generator = StatisticsGenerator()
     writer = OutputWriter(METADATA_DIR)
     

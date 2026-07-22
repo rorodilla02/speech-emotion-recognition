@@ -1,3 +1,4 @@
+from pathlib import Path
 from ..utils.audio import AudioReader
 from ..datasets.common import (
     ParseResult,
@@ -7,8 +8,9 @@ from ..datasets.common import (
 )
 
 class DatasetAuditor:
-    def __init__(self, audio_reader: AudioReader):
+    def __init__(self, audio_reader: AudioReader, raw_root: Path):
         self.audio_reader = audio_reader
+        self.raw_root = raw_root
 
     def audit(self, parsers: list[BaseParser]) -> ParseResult:
         metadata_list = []
@@ -27,6 +29,7 @@ class DatasetAuditor:
         for metadata in metadata_list:
             try:
                 metadata = self.audio_reader.read(metadata)
+                metadata.filepath = metadata.filepath.relative_to(self.raw_root)
                 valid_metadata.append(metadata)
 
             except RuntimeError as e:

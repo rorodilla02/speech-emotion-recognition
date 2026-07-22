@@ -139,7 +139,7 @@ Distribusi menunjukkan bahwa TESS memiliki durasi audio yang jauh lebih pendek d
 
 Status:
 
-🚧 In Progress
+✅ Completed
 
 Komponen yang telah diimplementasikan:
 
@@ -153,6 +153,29 @@ Komponen yang telah diimplementasikan:
 - RMSNormalizer
 
 Seluruh komponen dirancang modular dengan prinsip Single Responsibility sehingga setiap tahapan preprocessing dapat digunakan kembali secara independen.
+
+---
+
+## Dataset Preprocessing
+
+Status:
+
+✅ Completed
+
+Dataset preprocessing telah diimplementasikan menggunakan `DatasetPreprocessor` sebagai orchestrator.
+
+Tahapan yang dilakukan:
+
+- membersihkan metadata
+- koreksi speaker TESS (`OA` → `OAF`)
+- menghapus file INESCO yang corrupt (`mbaz_h138.wav`)
+- menjalankan preprocessing terhadap seluruh dataset
+- menyimpan hasil ke `data/processed/audio`
+
+Hasil implementasi:
+
+- Total file diproses: **7118**
+- File gagal: **0**
 
 ---
 
@@ -216,6 +239,28 @@ Target RMS:
 ```
 
 Normalisasi harus menjaga agar sinyal tidak mengalami clipping.
+
+---
+
+## Preprocessing Validation
+
+Status:
+
+✅ Completed
+
+Pipeline preprocessing divalidasi setelah seluruh audio selesai diproses.
+
+Validasi yang dilakukan:
+
+- jumlah file
+- keterbacaan audio
+- sample rate
+- mono audio
+- RMS normalization
+
+Seluruh validasi berhasil dilewati.
+
+Pada validasi RMS ditemukan beberapa file yang mengalami deviasi akibat clipping setelah normalisasi amplitudo. Setelah investigasi, kondisi tersebut merupakan karakteristik alami beberapa file audio dan ditangani menggunakan toleransi validasi sebesar ±0.01 RMS.
 
 ---
 
@@ -487,11 +532,11 @@ DurationEvaluator hanya bertugas mengevaluasi dampak pemilihan target durasi.
 
 ## Dataset Preprocessing
 
-- [ ] Data cleaning
-- [ ] Speaker correction
-- [ ] Remove invalid audio
-- [ ] Process entire dataset
-- [ ] Save processed audio
+- [x] Data cleaning
+- [x] Speaker correction
+- [x] Remove invalid audio
+- [x] Process entire dataset
+- [x] Save processed audio
 
 ---
 
@@ -536,7 +581,7 @@ DurationEvaluator hanya bertugas mengevaluasi dampak pemilihan target durasi.
 
 ## Validation
 
-- [ ] Validasi preprocessing
+- [x] Validasi preprocessing
 - [ ] Validasi feature
 - [ ] Validasi metadata
 
@@ -566,15 +611,13 @@ Tahap Data Preparation nantinya akan menghasilkan:
 
 # 🚀 Next Session
 
-1. Implementasi Dataset Preprocessing Pipeline
-2. Menyimpan processed audio
-3. Implementasi RM1 Dataset Split
-4. Implementasi RM2 Dataset Split
-5. Implementasi RM3 Dataset Split
-6. Implementasi Audio Augmentation
-7. Implementasi DurationNormalizer
-8. Implementasi Feature Extraction
-9. Validasi hasil preprocessing
+1. Implementasi RM1 Dataset Split
+2. Implementasi RM2 Dataset Split
+3. Implementasi RM3 Dataset Split
+4. Implementasi Audio Augmentation
+5. Implementasi DurationNormalizer
+6. Implementasi Feature Extraction
+7. Validasi Feature Extraction
 
 ---
 
