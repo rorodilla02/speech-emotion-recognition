@@ -6,6 +6,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 METADATA_PATH = PROJECT_ROOT/"data"/"metadata"/"file_inventory.csv"
 RAW_ROOT = PROJECT_ROOT/"data"/"raw"
 OUTPUT_ROOT = PROJECT_ROOT/"data"/"processed"/"audio"
+PROCESSED_METADATA_PATH = (PROJECT_ROOT/"data"/"metadata"/"processed_inventory.csv")
 
 def main():
     metadata = pd.read_csv(METADATA_PATH)
@@ -14,6 +15,7 @@ def main():
         metadata=metadata,
         input_root=RAW_ROOT,
         output_root=OUTPUT_ROOT,
+        metadata_output=PROCESSED_METADATA_PATH
     )
 
     print("Start preprocessing...")

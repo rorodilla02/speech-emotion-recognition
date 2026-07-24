@@ -174,8 +174,17 @@ Tahapan yang dilakukan:
 
 Hasil implementasi:
 
-- Total file diproses: **7118**
-- File gagal: **0**
+- Koreksi speaker TESS (`OA` → `OAF`)
+- Penghapusan file INESCO yang corrupt (`mbaz_h138.wav`)
+- Penghapusan seluruh kelas `Calm` pada RAVDESS agar seluruh dataset memiliki ruang label yang konsisten
+- Penyimpanan metadata hasil preprocessing (`processed_inventory.csv`)
+
+Hasil akhir preprocessing:
+
+- Total file diproses: 6926
+- Training dataset (RAVDESS + TESS + SAVEE): 4528 file
+- Evaluation dataset (INESCO): 2398 file
+- File gagal: 0
 
 ---
 
@@ -272,15 +281,50 @@ Strategi split mengikuti rancangan penelitian.
 
 ## RM1
 
-- RAVDESS menggunakan speaker-independent split.
-- SAVEE menggunakan speaker-independent split.
-- TESS menggunakan stratified split berdasarkan label karena hanya memiliki dua speaker.
+Status:
 
-Validasi yang harus dilakukan setelah split:
+✅ Completed
 
-- tidak terdapat speaker overlap
-- distribusi label tetap terjaga
-- distribusi dataset sesuai rancangan penelitian
+Split dataset telah berhasil diimplementasikan sesuai skenario RM1.
+
+Strategi yang digunakan:
+
+- RAVDESS → Speaker-independent split
+- TESS → Stratified split berdasarkan label emosi
+- SAVEE → Speaker-independent split (3 speaker training, 1 speaker testing)
+
+Seluruh split kemudian digabungkan menjadi:
+
+- train.csv
+- validation.csv
+- test.csv
+
+yang akan digunakan pada tahap training CNN.
+
+---
+
+## Split Validation
+
+Status:
+
+✅ Completed
+
+Pipeline dataset split divalidasi setelah seluruh metadata berhasil dibangun.
+
+Validasi yang dilakukan:
+
+- Total files
+- Dataset distribution
+- Label distribution
+- Speaker overlap
+
+Seluruh validasi berhasil dilewati.
+
+Output yang dihasilkan:
+
+- dataset_distribution_validation.csv
+- label_distribution_validation.csv
+- speaker_overlap_validation.csv
 
 ---
 
@@ -496,6 +540,20 @@ DurationEvaluator hanya bertugas mengevaluasi dampak pemilihan target durasi.
 
 ---
 
+## 8. Speaker-independent Strategy
+
+RAVDESS dan SAVEE menggunakan speaker-independent split sehingga identitas speaker tidak muncul pada lebih dari satu subset.
+
+TESS tidak memungkinkan menggunakan speaker-independent split karena hanya memiliki dua speaker, sehingga digunakan stratified split berdasarkan label emosi.
+
+---
+
+## 9. Consistent Label Space
+
+Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh dataset training memiliki tujuh label emosi yang konsisten.
+
+---
+
 # 📌 Progress Saat Ini
 
 ## Review
@@ -543,9 +601,12 @@ DurationEvaluator hanya bertugas mengevaluasi dampak pemilihan target durasi.
 ## Dataset Split
 
 ### RM1
-- [ ] Speaker-independent split
-- [ ] Stratified split (TESS)
-- [ ] Metadata split
+
+- [x] Speaker-independent split
+- [x] Stratified split (TESS)
+- [x] Metadata split
+- [x] Combined split
+- [x] Split validation
 
 ### RM2
 - [ ] Leave-One-Corpus-Out
@@ -582,6 +643,7 @@ DurationEvaluator hanya bertugas mengevaluasi dampak pemilihan target durasi.
 ## Validation
 
 - [x] Validasi preprocessing
+- [x] Validasi dataset split
 - [ ] Validasi feature
 - [ ] Validasi metadata
 
@@ -602,22 +664,24 @@ Beberapa karakteristik dataset yang masih menjadi perhatian:
 Tahap Data Preparation nantinya akan menghasilkan:
 
 - processed audio
-- augmented audio
-- metadata split
-- feature dataset
-- validation report preprocessing
+- processed metadata
+- dataset split RM1
+- split validation report
+- augmented audio (next)
+- feature dataset (next)
 
 ---
 
 # 🚀 Next Session
 
-1. Implementasi RM1 Dataset Split
-2. Implementasi RM2 Dataset Split
-3. Implementasi RM3 Dataset Split
-4. Implementasi Audio Augmentation
-5. Implementasi DurationNormalizer
-6. Implementasi Feature Extraction
-7. Validasi Feature Extraction
+Next Session
+
+1. Implementasi RM2 (Leave-One-Corpus-Out)
+2. Implementasi RM3 (Cross-Lingual Evaluation)
+3. Audio Augmentation
+4. Duration Normalization
+5. Feature Extraction
+6. Feature Validation
 
 ---
 

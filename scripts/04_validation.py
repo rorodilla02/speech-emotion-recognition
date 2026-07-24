@@ -3,7 +3,7 @@ import pandas as pd
 from ser.validation.preprocessing_validator import PreprocessingValidator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-METADATA_PATH = PROJECT_ROOT/"data"/"metadata"/"file_inventory.csv"
+METADATA_PATH = PROJECT_ROOT/"data"/"metadata"/"processed_inventory.csv"
 PROCESSED_ROOT = PROJECT_ROOT/"data"/"processed"/"audio"
 OUTPUT_DIR = PROJECT_ROOT/"data"/"metadata"
 
@@ -11,7 +11,6 @@ def main():
     print("Starting preprocessing validation..")
 
     metadata = pd.read_csv(METADATA_PATH)
-    metadata = metadata[metadata["filename"] != "mbaz_h138.wav"].copy()
     validator = PreprocessingValidator(
         metadata=metadata,
         processed_root=PROCESSED_ROOT,

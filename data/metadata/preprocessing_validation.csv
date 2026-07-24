@@ -1,6 +1,6 @@
 validation,status,expected,actual
-File Count,PASS,7118,7118
-Audio Read,PASS,7118,7118
-Sample Rate,PASS,7118,7118
-Mono Audio,PASS,7118,7118
-RMS Normalization,PASS,7118,7118
+File Count,PASS,6926,6926
+Audio Read,PASS,6926,6926
+Sample Rate,PASS,6926,6926
+Mono Audio,PASS,6926,6926
+RMS Normalization,PASS,6926,6926
