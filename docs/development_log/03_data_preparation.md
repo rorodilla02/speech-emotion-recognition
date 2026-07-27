@@ -330,13 +330,32 @@ Output yang dihasilkan:
 
 ## RM2
 
-Menggunakan Leave-One-Corpus-Out.
+Status:
+
+✅ Completed
+
+RM2 diimplementasikan menggunakan skenario Leave-One-Corpus-Out (LOCO).
 
 Eksperimen:
 
 - RAVDESS + TESS → SAVEE
 - RAVDESS + SAVEE → TESS
 - TESS + SAVEE → RAVDESS
+
+Setiap fold menghasilkan:
+
+- train.csv
+- validation.csv (kosong)
+- test.csv
+
+Seluruh fold telah divalidasi menggunakan:
+
+- Total Files
+- Dataset Separation
+- Label Distribution
+- Empty Validation
+
+Seluruh validasi RM2 memperoleh status PASS.
 
 ---
 
@@ -609,7 +628,10 @@ Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh da
 - [x] Split validation
 
 ### RM2
-- [ ] Leave-One-Corpus-Out
+
+- [x] Leave-One-Corpus-Out
+- [x] Metadata generation
+- [x] RM2 validation
 
 ### RM3
 - [ ] Cross-lingual evaluation split
@@ -643,7 +665,9 @@ Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh da
 ## Validation
 
 - [x] Validasi preprocessing
-- [x] Validasi dataset split
+- [x] Validasi RM1
+- [x] Validasi RM2
+- [ ] Validasi RM3
 - [ ] Validasi feature
 - [ ] Validasi metadata
 
@@ -666,6 +690,7 @@ Tahap Data Preparation nantinya akan menghasilkan:
 - processed audio
 - processed metadata
 - dataset split RM1
+- dataset split RM2
 - split validation report
 - augmented audio (next)
 - feature dataset (next)
@@ -676,12 +701,11 @@ Tahap Data Preparation nantinya akan menghasilkan:
 
 Next Session
 
-1. Implementasi RM2 (Leave-One-Corpus-Out)
-2. Implementasi RM3 (Cross-Lingual Evaluation)
-3. Audio Augmentation
-4. Duration Normalization
-5. Feature Extraction
-6. Feature Validation
+1. Implementasi RM3 (Cross-Lingual Evaluation)
+2. Audio Augmentation
+3. Duration Normalization
+4. Feature Extraction
+5. Feature Validation
 
 ---
 
@@ -691,7 +715,7 @@ Checkpoint ini berada pada fase implementasi Data Preparation.
 
 Implementasi yang telah selesai meliputi analisis durasi audio, penentuan target durasi, serta pembangunan arsitektur modular untuk audio preprocessing.
 
-Tahap berikutnya akan berfokus pada implementasi preprocessing terhadap seluruh dataset, dataset split, augmentasi, duration normalization, dan ekstraksi fitur.
+Tahap berikutnya akan berfokus pada implementasi RM3 (Cross-Lingual Evaluation), audio augmentation, duration normalization, feature extraction, dan feature validation.
 
 ---
 

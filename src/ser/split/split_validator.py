@@ -25,10 +25,173 @@ class SplitValidator:
         ]
 
         return pd.DataFrame([asdict(result) for result in results])
+
+    def validate_rm2(self):
+        folds = [
+            "fold_1",
+            "fold_2",
+            "fold_3",
+        ]
+        results = []
+
+        for fold in folds:
+            print(f"\nValidating {fold.upper()}")
+
+            fold_root = self.split_root / fold
+
+            train = pd.read_csv(fold_root / "train.csv")
+            validation = pd.read_csv(fold_root / "validation.csv")
+            test = pd.read_csv(fold_root / "test.csv")
+
+            results.append(
+                self._validate_rm2_total_files(
+                    train,
+                    validation,
+                    test,
+                    fold,
+                )
+            )
+
+            results.append(
+                self._validate_rm2_dataset_separation(
+                    train=train,
+                    test=test,
+                    fold_name=fold,
+                )
+            )
+
+            results.append(
+                self._validate_rm2_label_distribution(
+                    train=train,
+                    validation=validation,
+                    test=test,
+                    fold_name=fold,
+                )
+            )
+
+            results.append(
+                self._validate_rm2_empty_validation(
+                    validation=validation,
+                    fold_name=fold,
+                )
+            )
+
+        return pd.DataFrame([asdict(result) for result in results])
     
     @staticmethod
     def _status(condition: bool) -> str:
         return "PASS" if condition else "FAIL"
+
+    def _validate_rm2_total_files(
+            self,
+            train: pd.DataFrame,
+            validation: pd.DataFrame,
+            test: pd.DataFrame,
+            fold_name: str,
+    ) -> ValidationResult:
+        expected = len(self.metadata)
+
+        actual = (
+            len(train)
+            + len(validation)
+            + len(test)
+        )
+
+        status = self._status(expected == actual)
+
+        return ValidationResult(
+            validation=f"{fold_name.upper()} Total Files",
+            status=status,
+            expected=expected,
+            actual=actual,
+        )
+
+    def _validate_rm2_dataset_separation(
+        self,
+        train: pd.DataFrame,
+        test: pd.DataFrame,
+        fold_name: str,
+    ) -> ValidationResult:
+        train_datasets = set(train["dataset"].unique())
+        test_datasets = set(test["dataset"].unique())
+
+        expected = {
+            "fold_1": {
+                "train": {"ravdess", "tess"},
+                "test": {"savee"},
+            },
+            "fold_2": {
+                "train": {"ravdess", "savee"},
+                "test": {"tess"},
+            },
+            "fold_3": {
+                "train": {"tess", "savee"},
+                "test": {"ravdess"},
+            },
+        }
+
+        expected_train = expected[fold_name]["train"]
+        expected_test = expected[fold_name]["test"]
+
+        condition = (
+            train_datasets == expected_train
+            and
+            test_datasets == expected_test
+        )
+
+        status = self._status(condition)
+
+        return ValidationResult(
+            validation=f"{fold_name.upper()} Dataset Separation",
+            status=status,
+            expected=str(expected_train),
+            actual=str(train_datasets),
+        )
+
+    def _validate_rm2_label_distribution(
+            self,
+            train: pd.DataFrame,
+            validation: pd.DataFrame,
+            test: pd.DataFrame,
+            fold_name: str,
+    ) -> ValidationResult:
+        combined = pd.concat([train, validation, test], ignore_index=True)
+
+        expected = self._label_counts(self.metadata)
+        actual = self._label_counts(combined)
+        labels = sorted(set(expected.keys()) | set(actual.keys()))
+        condition = True
+
+        for label in labels:
+            if expected.get(label, 0) != actual.get(label, 0):
+                condition = False
+                break
+
+        status = self._status(condition)
+
+        return ValidationResult(
+            validation=f"{fold_name.upper()} Label Distribution",
+            status=status,
+            expected=len(labels),
+            actual=len(labels) if condition else 0,
+        )
+
+    def _validate_rm2_empty_validation(
+                self,
+                validation: pd.DataFrame,
+                fold_name: str,
+        ) -> ValidationResult:
+        expected = 0
+        actual = len(validation)
+
+        status = self._status(actual == expected)
+
+        return ValidationResult(
+            validation=f"{fold_name.upper()} Empty Validation",
+            status=status,
+            expected=expected,
+            actual=actual,
+        )
     
     def _load_split(self, split_name: str) ->pd.DataFrame:
         return pd.read_csv(self.split_root/f"{split_name}.csv")

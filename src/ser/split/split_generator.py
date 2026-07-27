@@ -39,14 +39,72 @@ class SplitGenerator:
         self._combined_dataset_splits(scenario="rm1")
     
     def generate_rm2(self):
-        pass
+        self._generate_loco_fold(
+            train_datasets=["ravdess", "tess"],
+            test_dataset="savee",
+            fold_name="fold_1",
+        )
+
+        self._generate_loco_fold(
+            train_datasets=["ravdess", "savee"],
+            test_dataset="tess",
+            fold_name="fold_2",
+        )
+
+        self._generate_loco_fold(
+            train_datasets=["tess", "savee"],
+            test_dataset="ravdess",
+            fold_name="fold_3",
+        )
     
     def generate_rm3(self):
         pass
 
     def _filter_training_metadata(self):
         pass
+
+    def _generate_loco_fold(self, train_datasets: list[str], test_dataset: str, fold_name: str):
+        train_metadata = self.metadata[
+            self.metadata["dataset"].isin(train_datasets)
+        ].copy()
+
+        test_metadata = self.metadata[
+            self.metadata["dataset"] == test_dataset
+        ].copy()
+
+        print(f"\n{fold_name.upper()}")
+        print(f"Training datasets : {train_datasets}")
+        print(f"Testing dataset   : {test_dataset}")
+        print(f"Train files : {len(train_metadata)}")
+        print(f"Test files  : {len(test_metadata)}")
+
+        dataset_split = DatasetSplit(
+            train=train_metadata,
+            validation=train_metadata.iloc[0:0].copy(),
+            test=test_metadata,
+        )
+
+        self._validate_loco_split(dataset_split)
+        self._save_dataset_split(
+            split=dataset_split,
+            scenario="rm2",
+            dataset=fold_name,
+        )
+
+        print(f"\n{fold_name.upper()} Summary")
+        print(f"Train : {len(dataset_split.train)}")
+        print(f"Validation : {len(dataset_split.validation)}")
+        print(f"Test : {len(dataset_split.test)}")
     
+    def _validate_loco_split(self, split: DatasetSplit):
+        total = (
+            len(split.train)
+            + len(split.validation)
+            + len(split.test)
+        )
+
+        print(f"Total files : {total}")
+
     def _get_unique_speakers(self, metadata: pd.DataFrame, dataset: str) -> list[str]:
         speakers = (
             metadata.loc[metadata["dataset"] == dataset, "speaker"]

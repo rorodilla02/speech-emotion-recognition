@@ -9,7 +9,15 @@ SPLIT_ROOT = PROJECT_ROOT/"data"/"splits"
 def main():
     metadata = pd.read_csv(METADATA_PATH)
     generator = SplitGenerator(metadata=metadata, output_root=SPLIT_ROOT)
-    generator.generate_rm1()
+
+    # print("RM1:")
+    # generator.generate_rm1()
+
+    print("RM2:")
+    generator.generate_rm2()
+
+    # print("RM3:")
+    # generator.generate_rm3()
 
 
 if __name__ == "__main__":
