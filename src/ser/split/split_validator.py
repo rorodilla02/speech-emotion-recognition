@@ -14,7 +14,8 @@ class ValidationResult:
 class SplitValidator:
     def __init__(self, split_root: Path, metadata: pd.DataFrame):
         self.split_root = split_root
-        self.metadata = metadata[metadata["dataset"].isin(TRAINING_DATASETS)].copy()
+        self.metadata = metadata.copy()
+        self.training_metadata = metadata[metadata["dataset"].isin(TRAINING_DATASETS)].copy()
             
     def validate(self) -> pd.DataFrame:
         results = [
@@ -26,7 +27,7 @@ class SplitValidator:
 
         return pd.DataFrame([asdict(result) for result in results])
 
-    def validate_rm2(self):
+    def validate_rm2(self) -> pd.DataFrame:
         folds = [
             "fold_1",
             "fold_2",
@@ -76,11 +77,82 @@ class SplitValidator:
                 )
             )
 
-        return pd.DataFrame([asdict(result) for result in results])
+        summary = pd.DataFrame([asdict(result) for result in results])
+
+        self._save_report(summary, "rm2_validation_summary.csv")
+
+        return summary
+
+    def validate_rm3(self) -> pd.DataFrame:
+        train = pd.read_csv(self.split_root/"train.csv")
+        validation = pd.read_csv(self.split_root/"validation.csv")
+        test = pd.read_csv(self.split_root/"test.csv")
+
+        results = [
+            self._validate_rm3_total_files(train, validation, test),
+            self._validate_rm3_train_dataset(train),
+            self._validate_rm3_test_dataset(test),
+            self._validate_rm3_empty_validation(validation),
+        ]
+
+        summary = pd.DataFrame([asdict(r) for r in results])
+
+        self._save_report(summary, "rm3_validation_summary.csv")
+        
+        return summary
     
     @staticmethod
     def _status(condition: bool) -> str:
         return "PASS" if condition else "FAIL"
+
+    def _validate_rm3_total_files(
+            self,
+            train: pd.DataFrame,
+            validation: pd.DataFrame,
+            test: pd.DataFrame,
+    ) -> ValidationResult:
+        expected = len(self.metadata)
+        actual = len(train) + len(validation) + len(test)
+
+        return ValidationResult(
+            validation="RM3 Total Files",
+            status=self._status(expected == actual),
+            expected=expected,
+            actual=actual,
+        )
+
+    def _validate_rm3_train_dataset(self, train: pd.DataFrame) -> ValidationResult:
+        expected = set(TRAINING_DATASETS)
+        actual = set(train["dataset"].unique())
+
+        return ValidationResult(
+            validation="RM3 Train Dataset",
+            status=self._status(expected == actual),
+            expected=expected,
+            actual=actual,
+        )
+
+    def _validate_rm3_test_dataset(self, test: pd.DataFrame) -> ValidationResult:
+        expected = {"inesco"}
+        actual = set(test["dataset"].unique())
+
+        return ValidationResult(
+            validation="RM3 Test Dataset",
+            status=self._status(expected == actual),
+            expected=expected,
+            actual=actual,
+        )
+
+    def _validate_rm3_empty_validation(self, validation: pd.DataFrame) -> ValidationResult:
+        expected = 0
+        actual = len(validation)
+
+        return ValidationResult(
+            validation="RM3 Empty Validation",
+            status=self._status(expected == actual),
+            expected=expected,
+            actual=actual,
+        )
 
     def _validate_rm2_total_files(
             self,
@@ -89,7 +161,7 @@ class SplitValidator:
             test: pd.DataFrame,
             fold_name: str,
     ) -> ValidationResult:
-        expected = len(self.metadata)
+        expected = len(self.training_metadata)
 
         actual = (
             len(train)
@@ -274,7 +346,7 @@ class SplitValidator:
 
     def _validate_label_distribution(self) -> ValidationResult: 
         splits = self._load_all_splits()
-        expected = self._label_counts(self.metadata)
+        expected = self._label_counts(self.training_metadata)
 
         combined = pd.concat(splits.values(), ignore_index=True)
         actual = self._label_counts(combined)

@@ -361,9 +361,25 @@ Seluruh validasi RM2 memperoleh status PASS.
 
 ## RM3
 
-Model hanya dilatih menggunakan dataset bahasa Inggris.
+Status:
 
-INESCO digunakan sepenuhnya sebagai dataset evaluasi cross-lingual dan tidak pernah digunakan pada proses training maupun validation.
+✅ Completed
+
+RM3 telah diimplementasikan menggunakan skenario Cross-Lingual Evaluation.
+
+Strategi yang digunakan:
+
+- seluruh dataset bahasa Inggris (RAVDESS, TESS, SAVEE) digunakan sebagai data training
+- dataset INESCO digunakan sepenuhnya sebagai data testing
+- validation tidak digunakan pada skenario ini
+
+Metadata yang dihasilkan:
+
+- train.csv
+- validation.csv (kosong)
+- test.csv
+
+Seluruh implementasi memastikan bahwa dataset INESCO tidak pernah digunakan pada proses training maupun validation sehingga tidak terjadi data leakage antar bahasa.
 
 ---
 
@@ -634,7 +650,10 @@ Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh da
 - [x] RM2 validation
 
 ### RM3
-- [ ] Cross-lingual evaluation split
+
+- [x] Cross-lingual evaluation split
+- [x] Metadata generation
+- [x] RM3 validation
 
 ---
 
@@ -667,7 +686,7 @@ Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh da
 - [x] Validasi preprocessing
 - [x] Validasi RM1
 - [x] Validasi RM2
-- [ ] Validasi RM3
+- [x] Validasi RM3
 - [ ] Validasi feature
 - [ ] Validasi metadata
 
@@ -691,6 +710,7 @@ Tahap Data Preparation nantinya akan menghasilkan:
 - processed metadata
 - dataset split RM1
 - dataset split RM2
+- dataset split RM3
 - split validation report
 - augmented audio (next)
 - feature dataset (next)
@@ -701,11 +721,11 @@ Tahap Data Preparation nantinya akan menghasilkan:
 
 Next Session
 
-1. Implementasi RM3 (Cross-Lingual Evaluation)
-2. Audio Augmentation
-3. Duration Normalization
-4. Feature Extraction
-5. Feature Validation
+1. Audio Augmentation
+2. Duration Normalization
+3. Feature Extraction
+4. Feature Validation
+5. Persiapan pipeline Modeling
 
 ---
 
@@ -715,7 +735,7 @@ Checkpoint ini berada pada fase implementasi Data Preparation.
 
 Implementasi yang telah selesai meliputi analisis durasi audio, penentuan target durasi, serta pembangunan arsitektur modular untuk audio preprocessing.
 
-Tahap berikutnya akan berfokus pada implementasi RM3 (Cross-Lingual Evaluation), audio augmentation, duration normalization, feature extraction, dan feature validation.
+Tahap berikutnya akan berfokus pada implementasi audio augmentation, duration normalization, feature extraction, dan feature validation sebagai tahapan akhir Data Preparation sebelum memasuki fase Modeling.
 
 ---
 

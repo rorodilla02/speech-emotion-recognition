@@ -1,0 +1,13 @@
+validation,status,expected,actual
+FOLD_1 Total Files,PASS,4528,4528
+FOLD_1 Dataset Separation,PASS,"{'tess', 'ravdess'}","{'tess', 'ravdess'}"
+FOLD_1 Label Distribution,PASS,7,7
+FOLD_1 Empty Validation,PASS,0,0
+FOLD_2 Total Files,PASS,4528,4528
+FOLD_2 Dataset Separation,PASS,"{'savee', 'ravdess'}","{'savee', 'ravdess'}"
+FOLD_2 Label Distribution,PASS,7,7
+FOLD_2 Empty Validation,PASS,0,0
+FOLD_3 Total Files,PASS,4528,4528
+FOLD_3 Dataset Separation,PASS,"{'tess', 'savee'}","{'savee', 'tess'}"
+FOLD_3 Label Distribution,PASS,7,7
+FOLD_3 Empty Validation,PASS,0,0

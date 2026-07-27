@@ -58,10 +58,45 @@ class SplitGenerator:
         )
     
     def generate_rm3(self):
-        pass
+        train_metadata = self.metadata[
+            self.metadata["dataset"].isin(TRAINING_DATASETS)
+        ].copy()
+
+        test_metadata = self.metadata[
+            self.metadata["dataset"] == "inesco"
+        ].copy()
+
+        print(f"Training files: {len(train_metadata)}")
+        print(f"Testing files: {len(test_metadata)}")
+
+        dataset_split = DatasetSplit(
+            train=train_metadata,
+            validation=train_metadata.iloc[0:0].copy(),
+            test=test_metadata,
+        )
+
+        dataset_split = self._validate_rm3_split(dataset_split)
+
+        self._save_dataset_split(
+            split=dataset_split,
+            scenario="rm3",
+            dataset="",
+        )
+
+        print("\nRM3 Summary")
+        print(f"Train: {len(dataset_split.train)}")
+        print(f"Validation: {len(dataset_split.validation)}")
+        print(f"Test: {len(dataset_split.test)}")
 
     def _filter_training_metadata(self):
         pass
+
+    def _validate_rm3_split(self, split: DatasetSplit):
+        total = (len(split.train) + len(split.validation) + len(split.test))
+
+        print(f"Total files: {total}")
+
+        return split
 
     def _generate_loco_fold(self, train_datasets: list[str], test_dataset: str, fold_name: str):
         train_metadata = self.metadata[
