@@ -385,14 +385,52 @@ Seluruh implementasi memastikan bahwa dataset INESCO tidak pernah digunakan pada
 
 # Audio Augmentation
 
-Augmentasi hanya diterapkan pada data training.
+Status:
 
-Jenis augmentasi yang disepakati:
+✅ Completed
 
-- Noise Injection
-- Pitch Shifting
+Audio augmentation telah diimplementasikan khusus untuk data training menggunakan arsitektur modular berbasis pipeline.
 
-Augmentasi tidak diterapkan pada validation maupun testing.
+Komponen yang telah diimplementasikan:
+
+- BaseAugmentor
+- AugmentationPipeline
+- NoiseInjection
+- PitchShifting
+- AudioWriter
+- DatasetAugmentor
+
+Seluruh augmentor mengikuti prinsip Single Responsibility sehingga setiap metode augmentasi dapat digunakan maupun dikombinasikan secara independen melalui AugmentationPipeline.
+
+Augmentasi hanya diterapkan pada dataset training (RAVDESS, TESS, SAVEE), sedangkan validation dan testing tidak mengalami perubahan untuk menghindari data leakage.
+
+Output yang dihasilkan:
+
+- augmented audio (data/augmented/)
+- augmented_inventory.csv
+
+---
+
+# Augmentation Validation
+
+Status:
+
+✅ Completed
+
+Pipeline augmentasi divalidasi setelah seluruh audio berhasil dihasilkan.
+
+Validasi yang dilakukan:
+
+- Total augmented files
+- File existence
+- Sample rate consistency
+- Duration consistency
+
+Seluruh validasi memperoleh status PASS.
+
+Output yang dihasilkan:
+
+- augmentation_validation.csv
 
 ---
 
@@ -659,8 +697,14 @@ Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh da
 
 ## Audio Augmentation
 
-- [ ] Noise Injection
-- [ ] Pitch Shifting
+- [x] BaseAugmentor
+- [x] AugmentationPipeline
+- [x] Noise Injection
+- [x] Pitch Shifting
+- [x] DatasetAugmentor
+- [x] AudioWriter
+- [x] Augmented metadata
+- [x] Augmentation validation
 
 ---
 
@@ -687,6 +731,7 @@ Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh da
 - [x] Validasi RM1
 - [x] Validasi RM2
 - [x] Validasi RM3
+- [x] Validasi augmentation
 - [ ] Validasi feature
 - [ ] Validasi metadata
 
@@ -712,7 +757,9 @@ Tahap Data Preparation nantinya akan menghasilkan:
 - dataset split RM2
 - dataset split RM3
 - split validation report
-- augmented audio (next)
+- augmented audio
+- augmented metadata
+- augmentation validation report
 - feature dataset (next)
 
 ---
@@ -721,11 +768,10 @@ Tahap Data Preparation nantinya akan menghasilkan:
 
 Next Session
 
-1. Audio Augmentation
-2. Duration Normalization
-3. Feature Extraction
-4. Feature Validation
-5. Persiapan pipeline Modeling
+1. Duration Normalization
+2. Feature Extraction
+3. Feature Validation
+4. Persiapan pipeline Modeling
 
 ---
 
@@ -753,3 +799,6 @@ Tahap berikutnya akan berfokus pada implementasi audio augmentation, duration no
 - Analisis durasi dilakukan menggunakan metadata tanpa membaca ulang file audio.
 - Target durasi ditetapkan menggunakan distribusi gabungan dataset training.
 - Seluruh pipeline dirancang modular, reproducible, dan mudah diperluas.
+- Audio augmentation hanya diterapkan pada dataset training.
+- Seluruh augmentasi diimplementasikan menggunakan AugmentationPipeline sehingga beberapa augmentor dapat dikombinasikan secara modular.
+- Metadata hasil augmentasi dibangun kembali berdasarkan audio yang telah diproses untuk menjaga konsistensi durasi dan sample rate.

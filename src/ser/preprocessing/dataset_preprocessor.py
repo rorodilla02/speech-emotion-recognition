@@ -34,25 +34,17 @@ class DatasetPreprocessor:
 
     def process(self):
         metadata = self._clean_metadata()
-        self._save_metadata(metadata)
 
-        processed = 0
-        failed = 0
-        
-        print(f"Total files: {len(metadata)}")
-        for i, row in enumerate(metadata.itertuples(index=False), start=1):
-            print(f"[{i}/{len(metadata)}] [{row.dataset}] {row.filename}")
-            try:
+        processed_records = []
+
+        for row in metadata.itertuples():
+            processed_records.append(
                 self._process_file(row)
-                processed += 1
-                print("Saved.")
+            )
 
-            except Exception as e:
-                failed += 1
-                print(f"Failed: {e}")
+        processed_metadata = pd.DataFrame(processed_records)
 
-        print(f"Processed : {processed}")
-        print(f"Failed    : {failed}")
+        self._save_metadata(processed_metadata)
 
     def _clean_metadata(self) -> pd.DataFrame:
         metadata = self.metadata.copy()
@@ -83,6 +75,20 @@ class DatasetPreprocessor:
         processed_audio = self.preprocessor.process(audio_data)
         output_path = self._build_output_path(Path(row.filepath))
         self._save_audio(processed_audio, output_path)
+
+        return {
+            "dataset": row.dataset,
+            "filename": row.filename,
+            "filepath": row.filepath,
+            "speaker": row.speaker,
+            "raw_label": row.raw_label,
+            "emotion": row.emotion,
+            "sample_rate": processed_audio.sample_rate,
+            "duration": (
+                len(processed_audio.audio)
+                / processed_audio.sample_rate
+            ),
+        }
 
     def _save_metadata(self, metadata: pd.DataFrame):
         self.metadata_output.parent.mkdir(parents=True, exist_ok=True)

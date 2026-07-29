@@ -1,5 +1,5 @@
 validation,status,expected,actual
 RM3 Total Files,PASS,6926,6926
-RM3 Train Dataset,PASS,"{'tess', 'savee', 'ravdess'}","{'tess', 'savee', 'ravdess'}"
+RM3 Train Dataset,PASS,"{'ravdess', 'savee', 'tess'}","{'ravdess', 'savee', 'tess'}"
 RM3 Test Dataset,PASS,{'inesco'},{'inesco'}
 RM3 Empty Validation,PASS,0,0
