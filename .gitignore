@@ -5,31 +5,57 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
 .ipynb_checkpoints/
-.env
+.coverage
+htmlcov/
 
-# Raw datasets and generated data
-data/raw/
-data/processed/
-data/augmented/
-data/features/
+# Editable install / packaging
+*.egg-info/
+build/
+dist/
+
+# Secrets
+.env
+.env.*
+.streamlit/secrets.toml
+
+# Dataset dan turunannya
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/splits/*
+
+data/augmented/*
+!data/augmented/.gitkeep
+!data/augmented/augmented_inventory.csv
+
+!data/features/.gitkeep
+!data/features/feature_index.csv
+!data/features/feature_validation.csv
+!data/features/feature_failed_files.csv
 
 # Generated experiment outputs
 artifacts/models/*
-artifacts/metrics/*
-artifacts/figures/*
-logs/*
 !artifacts/models/.gitkeep
+artifacts/metrics/*
 !artifacts/metrics/.gitkeep
-!artifacts/figures/.gitkeep
+logs/*
 !logs/.gitkeep
 
-# Local temporary files
+# Jaring pengaman berkas besar
+*.npy
+*.npz
+*.h5
+*.keras
+*.tflite
+!data/features/.gitkeep
+
+# Local temporary files & Spesific Environment
 tmp/
-
-# VS Code
 .vscode/
-
-# OS
+.idea/
 .DS_Store
 Thumbs.db
+desktop.ini
