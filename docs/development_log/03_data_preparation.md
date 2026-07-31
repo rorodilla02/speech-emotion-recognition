@@ -440,17 +440,22 @@ Status:
 
 ✅ Final
 
-Target durasi dipilih berdasarkan distribusi gabungan dataset training:
+Target durasi ditetapkan berdasarkan distribusi durasi **setelah preprocessing**
+(`duration_summary_processed.csv`), bukan durasi mentah. Analisis awal yang
+memakai `file_inventory.csv` tidak sah sebagai dasar keputusan karena silence
+trimming memperpendek durasi secara signifikan.
 
-- RAVDESS
-- TESS
-- SAVEE
+Statistik gabungan dataset training setelah preprocessing:
 
-Persentil yang dianalisis:
-
-- P75
-- P90
-- P95
+| Statistik | Nilai |
+|-----------|-------:|
+| Mean | 2.125 detik |
+| Median | 1.984 detik |
+| Std | 0.728 detik |
+| P75 | 2.301 detik |
+| P90 | 2.720 detik |
+| P95 | 3.622 detik |
+| Maximum | 7.139 detik |
 
 Keputusan akhir:
 
@@ -458,20 +463,56 @@ Target Duration:
 
 4 detik
 
-(hasil pembulatan dari P90 ≈ 3.97 detik)
+Alasan pemilihan 4 detik dibanding 3.6 dan 2.7 detik:
 
-Strategi normalisasi:
+- prioritas diberikan pada minimalisasi cropping, karena informasi yang
+  dipotong hilang permanen, sedangkan padding masih dapat diabaikan model
+- pada target 4 detik hanya 33.54% berkas SAVEE yang ter-crop,
+  dibanding 48.75% pada 3.6 detik dan 78.33% pada 2.7 detik
+- 4 detik mendekati mean SAVEE (3.661 detik), yaitu korpus dengan
+  sebaran durasi terpanjang
 
-- Audio lebih pendek → Zero Padding
-- Audio lebih panjang → Center Crop
+Distribusi padding dan cropping pada target 4 detik:
 
-Keputusan menggunakan P90 dipilih karena mampu mempertahankan sebagian besar informasi audio tanpa menghasilkan jumlah cropping yang berlebihan.
+| Dataset | Padding | Cropping | Rata-rata padding |
+|---------|--------:|---------:|------------------:|
+| RAVDESS | 99.92% | 0.08% | 2.127 detik |
+| TESS | 100.00% | 0.00% | 2.026 detik |
+| SAVEE | 66.25% | 33.54% | 0.650 detik |
+| Combined | 96.40% | 3.58% | 1.908 detik |
 
-Distribusi padding dan cropping akan didokumentasikan sebagai karakteristik alami dataset, bukan sebagai proses balancing.
+## Strategi Normalisasi
+
+Normalisasi durasi dilakukan pada **domain fitur**, bukan domain gelombang.
+
+- Audio lebih panjang dari 4 detik → center crop pada domain gelombang
+- Audio lebih pendek → diekstraksi apa adanya, tanpa padding gelombang
+- Matriks fitur di-zero-pad simetris pada sumbu waktu hingga 401 frame
+
+Keputusan ini diambil setelah pengujian menunjukkan bahwa zero padding pada
+domain gelombang menghasilkan frame keheningan digital yang nilai MFCC-nya
+jatuh ke lantai skala desibel. Nilai konstan tersebut merusak statistik
+normalisasi fitur dengan dua cara:
+
+- bila normalisasi dihitung atas seluruh frame, representasi wilayah ucapan
+  bergeser sekitar 0.6 sigma mengikuti proporsi padding, dan proporsi padding
+  berkorelasi dengan identitas korpus
+- bila normalisasi dihitung hanya atas frame ucapan, wilayah padding menjadi
+  outlier hingga -100 sigma
+
+Padding pada domain fitur bebas dari kedua masalah tersebut. Hasil pengujian
+menunjukkan statistik wilayah ucapan menjadi identik (mean 0.000, std 1.000)
+untuk seluruh durasi dari 1.056 detik hingga 7.139 detik.
+
+Komponen `DurationNormalizer` karenanya hanya bertugas melakukan center crop.
 
 ---
 
 # Feature Extraction
+
+Status:
+
+✅ Completed
 
 Feature Fusion yang digunakan:
 
@@ -480,41 +521,124 @@ Feature Fusion yang digunakan:
 - Delta-Delta MFCC
 - Chroma
 
-Parameter yang telah disepakati:
+## Parameter Final
 
-MFCC:
+| Parameter | Nilai | Keterangan |
+|-----------|-------|------------|
+| Sample rate | 16000 Hz | mengikuti tahap preprocessing |
+| Window | 25 ms (400 sampel) | konfigurasi baku pemrosesan wicara |
+| Hop length | 10 ms (160 sampel) | |
+| n_fft | 512 | |
+| n_mels | 40 | dibatasi agar tidak menghasilkan filter Mel kosong |
+| n_mfcc | 13 | |
+| Delta width | 5 | setara N=2 pada rumus Delta di subbab 2.3.3 |
+| Pre-emphasis | 0.97 | hanya pada cabang MFCC |
+| n_chroma | 12 | |
+| Chroma tuning | 0.0 | tetap, agar basis Chroma identik antar berkas |
 
-- 13 coefficients
+Total fitur per frame:
+- 13 (MFCC)
+- 13 (Delta)
+- 13 (Delta-Delta)
+- 12 (Chroma) = 51 fitur/frame
 
-Window:
+Bentuk keluaran per sampel:
+(51, 401)
 
-- 25 ms
+401 frame merupakan hasil dari 1 + 64000 // 160 pada panjang target 4 detik.
 
-Hop Length:
+## Pre-emphasis
 
-- 10 ms
+`librosa.feature.mfcc` tidak menerapkan pre-emphasis secara otomatis, padahal
+pipeline MFCC pada subbab 2.3.2 mencantumkannya sebagai tahap pertama.
+Pre-emphasis karenanya diterapkan secara eksplisit menggunakan
+`librosa.effects.preemphasis` dengan koefisien 0.97.
 
-FFT:
+Pre-emphasis hanya diterapkan pada cabang MFCC. Chroma diekstraksi dari sinyal
+tanpa pre-emphasis, karena penguatan frekuensi tinggi akan mendistorsi
+distribusi energi tonal yang justru ingin ditangkap Chroma.
 
-- 512
+## Normalisasi Skala Fitur
 
-Total feature:
+Sebelum normalisasi, rentang nilai keempat blok berbeda hingga tiga orde
+besaran (MFCC -583 s.d. +34; Chroma 0 s.d. 1). Tanpa penyeragaman skala,
+lapisan konvolusi pertama akan didominasi MFCC sehingga feature fusion tidak
+benar-benar terjadi.
 
-```
-13
-+
-13
-+
-13
-+
-12
+Strategi yang digunakan:
 
-=
+- MFCC, Delta, dan Delta-Delta → CMVN per berkas (zero mean, unit variance
+  per koefisien sepanjang sumbu waktu)
+- Chroma → dibiarkan apa adanya, karena nilainya sudah terbatas pada [0, 1]
+  dan CMVN akan menghapus profil tonal rata-rata
 
-51 feature/frame
-```
+CMVN per berkas dipilih dibanding StandardScaler global karena:
 
-Output feature akan menjadi input CNN.
+- bebas kebocoran data secara konstruksi, tidak perlu scaler terpisah untuk
+  RM1, tiga fold RM2, dan RM3
+- merupakan teknik baku untuk menghilangkan karakteristik kanal rekaman,
+  sehingga membantu generalisasi lintas-korpus pada RM2 dan RM3
+- tidak menghasilkan artefak scaler yang harus ikut dikirim ke prototipe
+
+## Penyimpanan
+
+Fitur diekstraksi satu kali per berkas unik, lalu disimpan pada satu larik
+tunggal. Setiap skenario penelitian hanya mengacu pada indeks baris.
+
+| Berkas | Isi |
+|--------|-----|
+| `data/features/features.npy` | Larik (11454, 51, 401) float32, ± 0.94 GB |
+| `data/features/feature_index.csv` | Indeks tiap baris |
+| `data/features/feature_validation.csv` | Laporan validasi |
+
+Komposisi:
+
+- 6926 berkas hasil preprocessing
+- 4528 berkas hasil augmentasi
+- Total 11454 baris
+
+Pendekatan indeks dipilih karena penyimpanan terpisah per skenario akan
+mengekstraksi berkas yang sama sampai lima kali dan membengkakkan ukuran
+menjadi sekitar 4 GB. Pendekatan ini sekaligus merupakan mitigasi risiko R-01.
+
+## Aturan Augmentasi pada Penyusunan Subset
+
+Seluruh korpus berbahasa Inggris diaugmentasi, termasuk berkas yang pada RM1
+masuk split validasi dan uji, karena RM2 dan RM3 melatih model pada gabungan
+korpus yang berbeda.
+
+Pemisahannya ditegakkan pada `FeatureDataset`:
+
+- data augmentasi hanya disertakan pada peran `train`
+- salinan augmentasi hanya ikut bila berkas sumbernya berada pada split yang
+  sedang dibangun
+- peran `validation` dan `test` menolak data augmentasi secara hard-coded
+
+---
+
+# Feature Validation
+
+Status:
+
+✅ Completed
+
+Validasi yang dilakukan:
+
+- Feature row count
+- Feature shape
+- Feature dtype
+- Feature finite (NaN dan Inf, cuplikan acak 500 baris)
+- Label space
+- INESCO label subset
+- Augmentation source
+- RM1 validation no augmentation
+- RM1 test no augmentation
+- RM1 filepath overlap
+- RM1 speaker overlap (non-TESS)
+
+Output yang dihasilkan:
+
+- feature_validation.csv
 
 ---
 
@@ -710,18 +834,21 @@ Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh da
 
 ## Duration Normalization
 
-- [ ] Zero Padding
-- [ ] Center Crop
-- [ ] Fixed length (4 detik)
+- [x] Center crop (domain gelombang)
+- [x] Zero padding (domain fitur)
+- [x] Fixed length (4 detik / 401 frame)
 
 ---
 
 ## Feature Extraction
 
-- [ ] MFCC
-- [ ] Delta MFCC
-- [ ] Delta-Delta MFCC
-- [ ] Chroma
+- [x] MFCC
+- [x] Delta MFCC
+- [x] Delta-Delta MFCC
+- [x] Chroma
+- [x] Pre-emphasis
+- [x] CMVN per berkas
+- [x] Feature index
 
 ---
 
@@ -732,8 +859,8 @@ Seluruh kelas Calm pada RAVDESS dihapus selama preprocessing sehingga seluruh da
 - [x] Validasi RM2
 - [x] Validasi RM3
 - [x] Validasi augmentation
-- [ ] Validasi feature
-- [ ] Validasi metadata
+- [x] Validasi feature
+- [x] Validasi metadata
 
 ---
 
@@ -744,6 +871,7 @@ Beberapa karakteristik dataset yang masih menjadi perhatian:
 - TESS memiliki satu file dengan kode speaker `OA` yang akan dikoreksi menjadi `OAF` pada tahap preprocessing.
 - INESCO memiliki satu file (`mbaz_h138.wav`) yang tidak dapat dibaca dan akan dikeluarkan dari pipeline preprocessing.
 - TESS memiliki satu file dengan sample rate 96 kHz yang masih memerlukan investigasi lebih lanjut.
+- TESS memiliki satu berkas dengan sample rate 96 kHz. Berkas tersebut ditangani melalui resampling seragam ke 16 kHz pada tahap preprocessing dan dilaporkan sebagai temuan T-05 pada Bab 3.
 
 ---
 
@@ -760,18 +888,19 @@ Tahap Data Preparation nantinya akan menghasilkan:
 - augmented audio
 - augmented metadata
 - augmentation validation report
-- feature dataset (next)
+- feature dataset
+- feature index
+- feature validation report
 
 ---
 
 # 🚀 Next Session
 
-Next Session
-
-1. Duration Normalization
-2. Feature Extraction
-3. Feature Validation
-4. Persiapan pipeline Modeling
+1. Perancangan arsitektur CNN
+2. Konfigurasi training (batch size menyesuaikan VRAM 4 GB)
+3. Training RM1
+4. Training RM2 (tiga fold LOCO)
+5. Evaluasi RM3 menggunakan model RM1
 
 ---
 
@@ -802,3 +931,18 @@ Tahap berikutnya akan berfokus pada implementasi audio augmentation, duration no
 - Audio augmentation hanya diterapkan pada dataset training.
 - Seluruh augmentasi diimplementasikan menggunakan AugmentationPipeline sehingga beberapa augmentor dapat dikombinasikan secara modular.
 - Metadata hasil augmentasi dibangun kembali berdasarkan audio yang telah diproses untuk menjaga konsistensi durasi dan sample rate.
+- Target durasi ditetapkan dari distribusi durasi setelah preprocessing,
+  bukan dari durasi mentah.
+- Normalisasi durasi dilakukan pada domain fitur untuk menghindari artefak
+  keheningan digital pada wilayah padding.
+- DurationNormalizer hanya bertugas melakukan center crop.
+- Pre-emphasis diterapkan secara eksplisit karena tidak disediakan oleh
+  librosa.feature.mfcc.
+- Pre-emphasis hanya diterapkan pada cabang MFCC, tidak pada Chroma.
+- Normalisasi skala fitur menggunakan CMVN per berkas agar bebas kebocoran
+  data dan tidak memerlukan artefak scaler saat deployment.
+- Chroma tidak dinormalisasi karena nilainya sudah terbatas pada [0, 1].
+- Fitur diekstraksi satu kali per berkas unik dan diacu melalui indeks baris.
+- Data augmentasi hanya boleh masuk ke subset dengan peran train, dan hanya
+  bila berkas sumbernya berada pada split yang sama.
+- Seluruh proses acak menggunakan RANDOM_SEED agar memenuhi KNF-06.
