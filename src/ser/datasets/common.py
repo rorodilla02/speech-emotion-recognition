@@ -57,6 +57,9 @@ class DatasetStatistics:
     min_duration: float
     max_duration: float
     mean_duration: float
+    p5_duration: float
+    p95_duration: float
+    std_duration: float
 
     emotion_distribution: dict[str, int]
 

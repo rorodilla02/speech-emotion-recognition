@@ -54,9 +54,15 @@ class OutputWriter:
                     "dataset": stats.dataset,
                     "total_files": stats.total_files,
                     "total_speakers": stats.total_speakers,
+                    # pemisah ";" dipakai agar tidak bentrok dengan delimiter CSV
+                    "speakers": "; ".join(stats.speakers),
+                    "sample_rates": "; ".join(map(str, stats.sample_rates)),
                     "min_duration": stats.min_duration,
                     "max_duration": stats.max_duration,
-                    "mean_duration": stats.mean_duration
+                    "mean_duration": stats.mean_duration,
+                    "std_duration": stats.std_duration,
+                    "p5_duration": stats.p5_duration,
+                    "p95_duration": stats.p95_duration,
                 }
             )
 
@@ -192,8 +198,12 @@ class OutputWriter:
 
         lines.append("## Dataset Statistics")
         lines.append("")
-        lines.append("| Dataset | Files | Speakers | Sample Rates | Min | Mean | Max |")
-        lines.append("|---------|-------|----------|--------------|-----|------|-----|")
+        lines.append(
+            "| Dataset | Files | Speakers | Sample Rates | Min | Mean | Max | Std | P5 | P95 |"
+        )
+        lines.append(
+            "|---------|-------|----------|--------------|-----|------|-----|-----|----|-----|"
+        )
 
         for stats in statistics_list:
             sample_rates = ", ".join(
@@ -201,14 +211,19 @@ class OutputWriter:
             )
 
             lines.append(
-                f"| {stats.dataset} |"
-                f"| {stats.total_files} |"
-                f"| {stats.total_speakers} |"
-                f"| {sample_rates} |"
-                f"| {stats.min_duration:.2f} |"
-                f"| {stats.mean_duration:.2f} |"
-                f"| {stats.max_duration:.2f} |"
+                f"| {stats.dataset} "
+                f"| {stats.total_files} "
+                f"| {stats.total_speakers} "
+                f"| {sample_rates} "
+                f"| {stats.min_duration:.2f} "
+                f"| {stats.mean_duration:.2f} "
+                f"| {stats.max_duration:.2f} "
+                f"| {stats.std_duration:.2f} "
+                f"| {stats.p5_duration:.2f} "
+                f"| {stats.p95_duration:.2f} |"
             )
+
+        lines.append("")
 
         lines.append("## Emotion Distribution")
         lines.append("")
@@ -249,14 +264,22 @@ class OutputWriter:
         self.write_label_mapping()
         self.write_report(result, statistics_list)
 
-    def write_duration_summary(self, summary: pd.DataFrame) -> Path:
-        output_path = self._output_path("duration_summary.csv")
+    def write_duration_summary(
+        self,
+        summary: pd.DataFrame,
+        filename: str = "duration_summary.csv",
+    ) -> Path:
+        output_path = self._output_path(filename)
         summary.to_csv(output_path, index=False)
 
         return output_path
-    
-    def write_duration_evaluation(self, summary: pd.DataFrame) -> Path:
-        output_path = self._output_path("duration_evaluation.csv")
+
+    def write_duration_evaluation(
+        self,
+        summary: pd.DataFrame,
+        filename: str = "duration_evaluation.csv",
+    ) -> Path:
+        output_path = self._output_path(filename)
         summary.to_csv(output_path, index=False)
 
         return output_path

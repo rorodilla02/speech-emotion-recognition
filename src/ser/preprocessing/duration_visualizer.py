@@ -1,46 +1,98 @@
 from __future__ import annotations
-from .constants  import TRAINING_DATASETS
+from pathlib import Path
+from .constants import ALL_DATASETS, TRAINING_DATASETS
 import pandas as pd
+import matplotlib
+
+matplotlib.use("Agg")  # tanpa display server (WSL2)
 import matplotlib.pyplot as plt
+
 
 class DurationVisualizer:
     """
-    Visualize audio duration distribution.
+    Menghasilkan visualisasi sebaran durasi audio.
 
-    This class is responsible for generating exploratory
-    visualizations from duration metadata.
-
-    Notes
-    -----
-    This class does not:
-    - compute statistics
-    - read metadata files
-    - save output files
+    Catatan
+    -------
+    Kelas ini tidak:
+    - menghitung statistik
+    - membaca file metadata
+    - memodifikasi metadata yang diterima
     """
+
     def __init__(self, metadata: pd.DataFrame):
         self.metadata = metadata.copy()
 
-    def plot_distribution(self, summary: pd.DataFrame):
-        self.metadata = self._filter_training_datasets()
-        durations = self.metadata["duration"].dropna()
-        combined = summary[summary["dataset"]=="Combined"].iloc[0]
+    def plot_boxplot(self, output_path: Path) -> Path:
+        """
+        Gambar 3.4: perbandingan sebaran durasi keempat dataset
+        pada satu sumbu yang sama.
+        """
+        data = []
+        labels = []
 
-        plt.figure(figsize=(10,6))
-        plt.hist(durations, bins=30,)
-        plt.axvline(combined["median"], color="green", linestyle="--", linewidth=2, label="Median")
-        plt.axvline(combined["p75"], color="blue", linestyle="--", linewidth=2, label="P75")
-        plt.axvline(combined["p90"], color="orange", linestyle="--", linewidth=2, label="P90")
-        plt.axvline(combined["p95"], color="red", linestyle="--", linewidth=2, label="P95")
-        
-        plt.title("Training Dataset Duration Distribution")
-        plt.xlabel("Duration (seconds)")
-        plt.ylabel("Number of Samples")
-        plt.grid(True)
+        for dataset in ALL_DATASETS:
+            durations = self.metadata.loc[
+                self.metadata["dataset"] == dataset, "duration"
+            ].dropna()
+
+            if durations.empty:
+                continue
+
+            data.append(durations.to_numpy(dtype=float))
+            labels.append(dataset.upper())
+
+        plt.figure(figsize=(10, 6))
+        plt.boxplot(data, tick_labels=labels, showfliers=True)
+        plt.title("Sebaran Durasi Audio per Dataset")
+        plt.xlabel("Dataset")
+        plt.ylabel("Durasi (detik)")
+        plt.grid(True, axis="y", alpha=0.3)
+        plt.tight_layout()
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_path, dpi=300)
+        plt.close()
+
+        return output_path
+
+    def plot_histogram(self, summary: pd.DataFrame, output_path: Path) -> Path:
+        """
+        Histogram durasi gabungan data latih beserta garis persentil.
+        Dipakai sebagai dasar penetapan target durasi.
+        """
+        durations = self.metadata.loc[
+            self.metadata["dataset"].isin(TRAINING_DATASETS), "duration"
+        ].dropna()
+
+        combined = summary[summary["dataset"] == "training_combined"].iloc[0]
+
+        plt.figure(figsize=(10, 6))
+        plt.hist(durations, bins=30)
+
+        for column, color, label in (
+            ("median", "green", "Median"),
+            ("p75", "blue", "P75"),
+            ("p90", "orange", "P90"),
+            ("p95", "red", "P95"),
+        ):
+            plt.axvline(
+                combined[column],
+                color=color,
+                linestyle="--",
+                linewidth=2,
+                label=f"{label} = {combined[column]:.2f} s",
+            )
+
+        plt.title("Sebaran Durasi Gabungan Data Latih")
+        plt.xlabel("Durasi (detik)")
+        plt.ylabel("Jumlah Sampel")
+        plt.grid(True, alpha=0.3)
         plt.legend()
+        plt.tight_layout()
 
-        plt.show()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(output_path, dpi=300)
+        plt.close()
 
-    def _filter_training_datasets(self) -> pd.DataFrame:
-        return self.metadata[
-            self.metadata["dataset"].isin(TRAINING_DATASETS)
-        ].copy()
+        return output_path

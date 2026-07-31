@@ -1,0 +1,15 @@
+validation,status,expected,actual
+Feature Row Count,PASS,11454,11454
+Feature Shape,PASS,"(51, 401)","(51, 401)"
+Feature Dtype,PASS,float32,float32
+Feature Finite (sample 500),PASS,500,500
+Label Space,PASS,7,7
+INESCO Label Subset,PASS,3,3
+Augmentation Source,PASS,"orphan=0, inesco_augmented=0","orphan=0, inesco_augmented=0"
+RM1 Validation No Augmentation,PASS,0,0
+RM1 Test No Augmentation,PASS,0,0
+RM1 Filepath Overlap,PASS,0,0
+RM1 Speaker Overlap (non-TESS),PASS,0,0
+RM1 Train Size,INFO,3203,6406
+RM1 Validation Size,INFO,628,628
+RM1 Test Size,INFO,697,697

@@ -1,8 +1,0 @@
-emotion,expected,actual,status
-Angry,652,652,PASS
-Disgust,652,652,PASS
-Fear,652,652,PASS
-Happy,652,652,PASS
-Neutral,616,616,PASS
-Sad,652,652,PASS
-Surprise,652,652,PASS
