@@ -9,13 +9,19 @@ class NoiseInjection(BaseAugmentor):
     Applies Gaussian noise to an audio signal.
     """
 
-    def __init__(self, noise_factor: float=0.005, probability: float=0.5):
-        self.noise_factor = noise_factor
+    def __init__(self, min_noise_factor: float=0.003, max_noise_factor: float=0.10, probability: float=0.5):
+        self.min_noise_factor = min_noise_factor
+        self.max_noise_factor = max_noise_factor
         self.probability = probability
 
     def apply(self, audio: AudioData) -> AudioData:
         if random.random() > self.probability:
             return audio
+
+        noise_factor = random.uniform(
+            self.min_noise_factor,
+            self.max_noise_factor,
+        )
 
         noise = np.random.normal(
             loc=0.0,
@@ -23,7 +29,7 @@ class NoiseInjection(BaseAugmentor):
             size=audio.audio.shape,
         )
 
-        augmented = (audio.audio + self.noise_factor * noise)
+        augmented = (audio.audio + noise_factor * noise)
         augmented = np.clip(augmented, -1.0, 1.0)
 
         return AudioData(

@@ -10,3 +10,4 @@ class BaseAugmentor(ABC):
     @abstractmethod
     def apply(self, audio: AudioData) -> AudioData:
         raise NotImplementedError
+    

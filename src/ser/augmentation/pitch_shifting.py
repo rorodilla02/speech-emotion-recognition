@@ -18,10 +18,7 @@ class PitchShifting(BaseAugmentor):
         if random.random() > self.probability:
             return audio
 
-        n_steps = random.randint(
-            self.min_steps,
-            self.max_steps,
-        )
+        n_steps = self._draw_steps()
 
         augmented_audio = librosa.effects.pitch_shift(
             y=audio.audio,
@@ -29,10 +26,18 @@ class PitchShifting(BaseAugmentor):
             n_steps=n_steps,
         )
 
-        print(audio.audio.shape)
-        print(augmented_audio.shape)
-
         return AudioData(
             audio=augmented_audio.astype(audio.audio.dtype),
             sample_rate=audio.sample_rate,
         )
+
+    def _draw_steps(self) -> int:
+        candidates = [
+            step for step in range(self.min_steps, self.max_steps + 1)
+            if step != 0
+        ]
+
+        if not candidates:
+            raise ValueError("Rentang pitch shifting tidak boleh hanya berisi nol!")
+
+        return random.choice(candidates)

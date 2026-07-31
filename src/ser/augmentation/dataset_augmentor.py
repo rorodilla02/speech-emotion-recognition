@@ -27,10 +27,12 @@ class DatasetAugmentor:
 
     def run(self):
         self.output_root.mkdir(parents=True, exist_ok=True)
+        total = len(self.metadata)
 
         print(f"Output directory: {self.output_root}")
+        print(f"Files to augment: {total}")
 
-        for _, row in self.metadata.iterrows():
+        for position, (_, row) in enumerate(self.metadata.iterrows(), start=1):
             audio_path = self.audio_root / Path(row["filepath"])
             audio = self.audio_loader.load(audio_path)
             augmented_audio = self.pipeline.apply(audio)
@@ -41,18 +43,15 @@ class DatasetAugmentor:
                 outputh_path=output_path,
             )
 
-            record = self._build_record(row=row, output_path=output_path)
-            self.records.append(record)
-            self._save_metadata()
+            self.records.append(
+                self._build_record(row=row, output_path=output_path)
+            )
 
-            print(f"Input : {audio_path}")
-            print(f"Output: {output_path}")
-            print(f"Sample Rate: {augmented_audio.sample_rate}")
-            print(f"Samples: {augmented_audio.audio.shape}")
+            if position % 500 == 0 or position == total:
+                print(f"Augmented {position}/{total}")
 
-            print("Original :", audio.audio.shape)
-            print("Augmented:", augmented_audio.audio.shape)
-            print("-" * 40)
+        # Ditulis sekali setelah seluruh berkas selesai diproses
+        self._save_metadata()
 
     def _build_record(self, row: pd.Series, output_path: Path) -> dict:
         return {
@@ -64,7 +63,7 @@ class DatasetAugmentor:
             "emotion": row["emotion"],
             "sample_rate": row["sample_rate"],
             "duration": row["duration"],
-            "augmentation": "noise_pitch",
+            "augmentation": "pitch_noise",
         }
 
     def _save_metadata(self):
