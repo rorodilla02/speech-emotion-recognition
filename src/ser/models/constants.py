@@ -1,0 +1,42 @@
+from ..features.constants import (
+    FEATURE_SHAPE,
+    EMOTION_LABELS,
+)
+
+MODEL_INPUT_SHAPE = (*FEATURE_SHAPE, 1)
+N_CLASSES = len(EMOTION_LABELS)
+
+CONV_BLOCKS = (
+    (32, 2, 2, 0.0),
+    (64, 2, 2, 0.0),
+    (128, 2, 4, 0.3),
+    (128, 2, 4, 0.3),
+)
+
+KERNEL_SIZE = (3, 3)
+CONV_PADDING = "same"
+ACTIVATION = "relu"
+
+# Lapisan Klasifikasi
+DENSE_UNITS = 128
+DENSE_DROPOUT_RATE = 0.5
+OUTPUT_ACTIVATION = "softmax"
+
+USE_BATCH_NORM = True
+MODEL_NAME = "ser_cnn"
+
+BATCH_SIZE = 32
+LEARNING_RATE = 1e-3
+MAX_EPOCH = 100
+
+METRIC_NAME = "macro_f1"
+MONITOR_METRIC = f"val{METRIC_NAME}"
+MONITOR_MODE = "max"
+
+EARLY_STOPPING_PATIENCE = 12
+REDUCE_LR_FACTOR = 0.5
+REDUCE_LR_PATIENCE = 5
+MIN_LEARNING_RATE = 1e-5
+
+CHECKPOINT_FILENAME = "best_model.keras"
+TRAINING_LOG_FILENAME = "training_log.csv"

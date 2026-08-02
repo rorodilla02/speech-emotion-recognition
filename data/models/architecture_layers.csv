@@ -1,0 +1,26 @@
+layer,type,output_shape,params,activations
+feature_fusion,InputLayer,"(51, 401, 1)",0,20451
+conv1,Conv2D,"(51, 401, 32)",288,654432
+bn1,BatchNormalization,"(51, 401, 32)",128,654432
+relu1,Activation,"(51, 401, 32)",0,654432
+pool1,MaxPooling2D,"(25, 200, 32)",0,160000
+conv2,Conv2D,"(25, 200, 64)",18432,320000
+bn2,BatchNormalization,"(25, 200, 64)",256,320000
+relu2,Activation,"(25, 200, 64)",0,320000
+pool2,MaxPooling2D,"(12, 100, 64)",0,76800
+conv3,Conv2D,"(12, 100, 128)",73728,153600
+bn3,BatchNormalization,"(12, 100, 128)",512,153600
+relu3,Activation,"(12, 100, 128)",0,153600
+pool3,MaxPooling2D,"(6, 25, 128)",0,19200
+dropout3,Dropout,"(6, 25, 128)",0,19200
+conv4,Conv2D,"(6, 25, 128)",147456,19200
+bn4,BatchNormalization,"(6, 25, 128)",512,19200
+relu4,Activation,"(6, 25, 128)",0,19200
+pool4,MaxPooling2D,"(3, 6, 128)",0,2304
+dropout4,Dropout,"(3, 6, 128)",0,2304
+flatten,Flatten,"(2304,)",0,2304
+dense,Dense,"(128,)",294912,128
+bn_dense,BatchNormalization,"(128,)",512,128
+relu_dense,Activation,"(128,)",0,128
+dropout_dense,Dropout,"(128,)",0,128
+output,Dense,"(7,)",903,7

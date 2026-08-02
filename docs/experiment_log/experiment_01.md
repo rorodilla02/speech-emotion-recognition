@@ -1,42 +1,84 @@
-Experiment 01
-Duration Target Selection
+# Experiment 01
 
-2.5
+| Field | Isi |
+|-------|-----|
+| ID | EXP-NN |
+| Tanggal | YYYY-MM-DD |
+| Skenario | RM1 / RM2 fold_n / RM3 |
+| Seed | 42 |
+| Commit | `git rev-parse --short HEAD` |
+| Status | berhasil / gagal / dibatalkan |
+| Durasi | mm menit |
 
-padding berapa?
-RAVDESS: 1247
-TESS: 2800
-SAVEE: 318
+## Tujuan
 
-cropping berapa
-RAVDESS: 1
-TESS: 0
-SAVEE: 161
+Satu sampai dua kalimat. Apa yang ingin diketahui dari run ini, bukan apa
+yang dijalankan.
 
---------------------------------
+## Perbedaan terhadap baseline
 
-2.75
+Baseline adalah `data/models/training_config.json`. Isi hanya parameter yang
+berbeda. Bila tidak ada, tulis "tidak ada".
 
-padding berapa?
-RAVDESS: 1247
-TESS: 2800
-SAVEE: 318
+| Parameter | Baseline | Run ini | Alasan |
+|-----------|----------|---------|--------|
+| | | | |
 
-cropping berapa
-RAVDESS: 1
-TESS: 0
-SAVEE: 161
+## Komposisi data
 
---------------------------------
+| Subset | Jumlah asli | Setelah augmentasi | Korpus |
+|--------|-------------|--------------------|--------|
+| Train | | | |
+| Validation | | tanpa augmentasi | |
+| Test | | tanpa augmentasi | |
 
-3.0
+## Hasil
 
-padding berapa?
-RAVDESS: 1247
-TESS: 2800
-SAVEE: 318
+| Metrik | Nilai |
+|--------|-------|
+| Epoch dijalankan | |
+| Epoch terbaik | |
+| Macro F1 validasi | |
+| Macro F1 uji | |
+| Accuracy uji | |
+| Waktu per epoch | |
+| Puncak VRAM | |
 
-cropping berapa
-RAVDESS: 1
-TESS: 0
-SAVEE: 161
+### Per korpus (data uji)
+
+| Korpus | n | Accuracy | Macro F1 |
+|--------|---|----------|----------|
+| | | | |
+
+### Per kelas
+
+Rujuk `metrics_per_class.csv`. Sebutkan di sini hanya kelas dengan F1
+terendah dan tertinggi beserta dugaan penyebabnya.
+
+## Pengamatan
+
+Hal yang terlihat dari learning curve, confusion matrix, atau perilaku
+training. Tulis yang mengganggu, bukan hanya yang bagus. Contoh yang layak
+dicatat: validasi berhenti naik jauh sebelum training loss datar, satu kelas
+konsisten tertukar dengan kelas lain, early stopping tidak pernah terpicu.
+
+## Keputusan
+
+Pilih satu dan beri alasan:
+
+- diterima sebagai hasil yang dilaporkan
+- diterima sebagai pembanding saja
+- ditolak, run diulang dengan perubahan (sebutkan perubahannya)
+
+## Artefak
+
+- `data/models/.../best_model.keras`
+- `data/models/.../training_log.csv`
+- `data/models/.../predictions.csv`
+- `data/models/.../metrics_summary.csv`
+- `data/models/.../metrics_per_class.csv`
+
+## Tindak lanjut
+
+Apa yang dikerjakan berikutnya sebagai akibat run ini. Bila tidak ada,
+tulis "tidak ada".

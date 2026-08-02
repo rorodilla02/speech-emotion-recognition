@@ -25,7 +25,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
-data/splits/*
+data/splits/
 
 data/augmented/*
 !data/augmented/.gitkeep
@@ -35,6 +35,8 @@ data/augmented/*
 !data/features/feature_index.csv
 !data/features/feature_validation.csv
 !data/features/feature_failed_files.csv
+
+data/models/smoke_test/
 
 # Generated experiment outputs
 artifacts/models/*

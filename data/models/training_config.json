@@ -1,0 +1,10 @@
+{
+  "batch_size": 32,
+  "learning_rate": 0.001,
+  "max_epochs": 100,
+  "early_stopping_patience": 12,
+  "reduce_lr_factor": 0.5,
+  "reduce_lr_patience": 5,
+  "min_learning_rate": 1e-05,
+  "random_seed": 42
+}
