@@ -66,7 +66,7 @@ def main():
 
     trainer = ScenarioTrainer(
         dataset=dataset,
-        output_dir=OUTPUT_DIR,
+        output_dir=output_dir,
         config=config,
     )
 

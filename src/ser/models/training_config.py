@@ -44,6 +44,7 @@ class TrainingConfig:
 def set_global_seed(seed: int = RANDOM_SEED):
     """Menyeragamkan seed Python, NumPy, dan backend Keras."""
     keras.utils.set_random_seed(seed)
+    tf.config.experimental.enable_op_determinism()
 
 
 def configure_device() -> str:

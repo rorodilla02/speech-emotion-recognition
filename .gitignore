@@ -25,7 +25,8 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
-data/splits/
+data/splits/*.wav
+
 
 data/augmented/*
 !data/augmented/.gitkeep

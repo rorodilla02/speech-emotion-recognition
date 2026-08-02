@@ -341,25 +341,86 @@ _(diisi setelah checkpoint dijalankan)_
 
 ## Hasil
 
-_(diisi setelah checkpoint dijalankan)_
+Model of record: seed 42. Lima seed dijalankan untuk mengestimasi variansi
+antar-run, bukan untuk memilih model terbaik.
 
-| Metrik | Nilai |
-|--------|-------|
-| Accuracy | |
-| Macro F1-score | |
-| Epoch terbaik | |
-| Epoch dijalankan | |
-| Waktu per epoch | |
-| Baseline mayoritas kelas | ±14.40% |
-| Chance level | 14.29% |
+| Metrik | Seed 42 | Rerata 5 seed | SD | Rentang |
+|--------|---------|---------------|-----|---------|
+| Macro F1 uji, gabungan | 0,7886 | 0,7974 | 0,0133 | 0,0298 |
+| Macro F1 uji, rata-rata antar korpus | 0,6091 | 0,6323 | 0,0245 | 0,0571 |
+| Accuracy uji, gabungan | 0,7891 | | | |
+| Macro F1 validasi | 0,8408 | 0,8404 | 0,0021 | 0,0042 |
+| Epoch terbaik | 52 | 39 | | 27-52 |
+| Waktu per epoch | 9,0 detik | ±9,5 detik | | |
+| Puncak VRAM | 1,01 GB | | | |
+| Baseline mayoritas kelas | ±14,40% | | | |
+| Chance level | 14,29% | | | |
+
+### Per Korpus
+
+| Korpus | Seed 42 | Rerata 5 seed | SD | Rentang |
+|--------|---------|---------------|-----|---------|
+| TESS | 0,9976 | 0,9986 | 0,0013 | 0,9976–1,0000 |
+| RAVDESS | 0,4727 | 0,4660 | 0,0275 | 0,4375–0,4981 |
+| SAVEE | 0,4720 | 0,4123 | 0,0616 | 0,3490–0,4819 |
+| Rata-rata antar korpus | 0,6474 | 0,6256 | 0,0207 | 0,5955-0,6474 |
+| Gabungan | 0,8004 | 0,7925 | 0,0108 | 0,7754–0,8004 |
+
+Sumber angka: `data/models/rm1/seed_summary.csv`.
+
+## Temuan
+
+**Angka gabungan tidak mewakili kemampuan model.** Komposisi data uji timpang,
+TESS 60,4 persen dari 697 sampel. Karena TESS praktis sempurna, angka
+gabungan 0,7974 lebih menggambarkan proporsi korpus daripada kemampuan
+model. Performa pada kondisi speaker-independent berada di kisaran 0,41
+sampai 0,49.
+
+**TESS tidak independen.** Irisan nama berkas train-test nol, sehingga tidak
+ada kebocoran berkas. Namun 270 dari 271 pasangan speaker dan kata pembawa
+pada data uji juga terdapat pada data latih, yaitu 99,6 persen. TESS hanya
+memiliki dua speaker sehingga pemisahan berbasis speaker tidak mungkin
+dilakukan. Satu kesalahan pada seed 46 menunjukkan model tetap melakukan
+klasifikasi, hanya pada tugas yang terlalu mudah.
+
+**Metrik validasi lemah membedakan kemampuan lintas-speaker.** Rentang macro
+F1 validasi antar-seed hanya 0,0042, sementara rentang macro F1 SAVEE pada
+data uji mencapai 0,1063, yaitu dua puluh lima kali lipat. Data validasi
+tidak memuat SAVEE, dan bagian TESS di dalamnya bernilai konstan sehingga
+tidak ikut membedakan. Rentang epoch terbaik 27 sampai 52 pada tingkat skor
+validasi yang setara menegaskan kurva validasi sudah datar sejak epoch
+pertengahan.
+
+**ReduceLROnPlateau menstabilkan tahap akhir.** Pada EXP-01 yang berjalan
+tanpa penurunan learning rate, fluktuasi val_macro_f1 pada 15 epoch terakhir
+mencapai kurang lebih 0,036. Pada EXP-02 dengan callback aktif, fluktuasi
+menyempit menjadi kurang lebih 0,011 dengan puncak yang praktis sama.
+Konfigurasi dipertahankan.
+
+## Acuan Penilaian RM2
+
+Ditetapkan sebelum RM2 dijalankan. Perbandingan dilakukan terhadap baseline
+RM1 pada korpus yang sama, bukan terhadap angka gabungan.
+
+| Fold RM2 | Korpus uji | Baseline RM1 | Rentang RM1 | Sifat baseline |
+|----------|-----------|--------------|-------------|----------------|
+| 1 | SAVEE | 0,4087 | 0,3517-0,4580 | speaker-independent, sebanding |
+| 2 | TESS | 0,9995 | 0,9976-1,0000 | speaker-dependent, tidak sebanding |
+| 3 | RAVDESS | 0,4888 | 0,4581-0,5405 | speaker-independent, sebanding |
+
+Penurunan hanya diklaim bermakna bila rentang antar-seed RM2 pada suatu fold
+tidak bertumpang tindih dengan rentang RM1 pada korpus yang sama. Uji
+signifikansi statistik tidak digunakan, karena seed bukan sampel acak dari
+suatu populasi dan jumlahnya terlalu kecil.
 
 ## Validasi
 
-- [ ] Data augmentasi tidak muncul pada validation dan test
-- [ ] Tidak ada speaker yang muncul di train sekaligus test (selain TESS)
-- [ ] Training berhenti lewat early stopping, bukan mentok pada epoch maksimum
-- [ ] Learning curve tidak menunjukkan overfitting ekstrem
-- [ ] Hasil melampaui baseline mayoritas kelas
+- [x] Data augmentasi tidak muncul pada validation dan test
+- [x] Tidak ada speaker yang muncul di train sekaligus test (selain TESS)
+- [x] Training berhenti lewat early stopping pada seluruh seed
+- [x] Learning curve tidak menunjukkan overfitting ekstrem
+- [x] Hasil melampaui baseline mayoritas kelas
+- [x] Variansi antar-run terestimasi dari lima seed
 
 ## Output
 
@@ -631,6 +692,12 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
   checkpoint 6 memakai kolom `real_frames`.
 - Subbab 2.4.2 belum memuat Batch Normalization, Dropout, categorical
   cross-entropy, dan Adam. Penambahan dikerjakan setelah Modeling selesai.
+- Data uji TESS tidak independen secara akustik maupun leksikal. Irisan
+  pasangan speaker dan kata pembawa antara train dan test mencapai 99,6
+  persen, karena TESS hanya memiliki dua speaker.
+- Metrik validasi RM1 memiliki daya pisah rendah terhadap kemampuan
+  lintas-speaker, sehingga titik henti early stopping bervariasi 27 sampai
+  52 epoch pada tingkat skor validasi yang setara.
 
 ---
 
