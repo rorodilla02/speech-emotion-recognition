@@ -2,83 +2,51 @@
 
 | Field | Isi |
 |-------|-----|
-| ID | EXP-NN |
-| Tanggal | YYYY-MM-DD |
-| Skenario | RM1 / RM2 fold_n / RM3 |
+| ID | EXP-01 |
+| Tanggal | 2026-08-02 |
+| Skenario | RM1 |
 | Seed | 42 |
-| Commit | `git rev-parse --short HEAD` |
-| Status | berhasil / gagal / dibatalkan |
-| Durasi | mm menit |
+| Commit | feat(models): CNN architecture and training configuration |
+| Status | gagal |
+| Durasi | (isi) |
 
 ## Tujuan
 
-Satu sampai dua kalimat. Apa yang ingin diketahui dari run ini, bukan apa
-yang dijalankan.
+Training dan evaluasi pertama skenario RM1 within-corpus.
 
 ## Perbedaan terhadap baseline
 
-Baseline adalah `data/models/training_config.json`. Isi hanya parameter yang
-berbeda. Bila tidak ada, tulis "tidak ada".
-
-| Parameter | Baseline | Run ini | Alasan |
-|-----------|----------|---------|--------|
-| | | | |
-
-## Komposisi data
-
-| Subset | Jumlah asli | Setelah augmentasi | Korpus |
-|--------|-------------|--------------------|--------|
-| Train | | | |
-| Validation | | tanpa augmentasi | |
-| Test | | tanpa augmentasi | |
+Tidak ada perubahan yang disengaja. Terdapat kesalahan penulisan pada
+`MONITOR_METRIC`, tertulis `valmacro_f1` alih-alih `val_macro_f1`.
 
 ## Hasil
 
-| Metrik | Nilai |
-|--------|-------|
-| Epoch dijalankan | |
-| Epoch terbaik | |
-| Macro F1 validasi | |
-| Macro F1 uji | |
-| Accuracy uji | |
-| Waktu per epoch | |
-| Puncak VRAM | |
-
-### Per korpus (data uji)
-
-| Korpus | n | Accuracy | Macro F1 |
-|--------|---|----------|----------|
-| | | | |
-
-### Per kelas
-
-Rujuk `metrics_per_class.csv`. Sebutkan di sini hanya kelas dengan F1
-terendah dan tertinggi beserta dugaan penyebabnya.
+Run dibatalkan. Metrik tidak dilaporkan.
 
 ## Pengamatan
 
-Hal yang terlihat dari learning curve, confusion matrix, atau perilaku
-training. Tulis yang mengganggu, bukan hanya yang bagus. Contoh yang layak
-dicatat: validasi berhenti naik jauh sebelum training loss datar, satu kelas
-konsisten tertukar dengan kelas lain, early stopping tidak pernah terpicu.
+Kesalahan nama metrik tidak menghentikan proses. Keras hanya memberi
+peringatan ketika nama monitor tidak dikenal, sehingga:
+
+- EarlyStopping tidak berfungsi, training berjalan penuh 100 epoch
+- ReduceLROnPlateau tidak pernah menurunkan learning rate
+- ModelCheckpoint menyimpan bobot setiap epoch tanpa syarat, sehingga
+  `best_model.keras` berisi bobot epoch terakhir, bukan bobot terbaik
+
+Kegagalan baru terdeteksi saat pembacaan training log setelah seluruh
+training selesai.
 
 ## Keputusan
 
-Pilih satu dan beri alasan:
-
-- diterima sebagai hasil yang dilaporkan
-- diterima sebagai pembanding saja
-- ditolak, run diulang dengan perubahan (sebutkan perubahannya)
+Ditolak. Run diulang setelah perbaikan `MONITOR_METRIC` dan penambahan
+callback `MonitorGuard` yang memvalidasi ketersediaan metrik pantauan pada
+akhir epoch pertama.
 
 ## Artefak
 
-- `data/models/.../best_model.keras`
-- `data/models/.../training_log.csv`
-- `data/models/.../predictions.csv`
-- `data/models/.../metrics_summary.csv`
-- `data/models/.../metrics_per_class.csv`
+- `data/models/_failed/exp01_training_log.csv` (kurva 100 epoch, tetap
+  dipakai untuk menilai kesesuaian nilai patience)
 
 ## Tindak lanjut
 
-Apa yang dikerjakan berikutnya sebagai akibat run ini. Bila tidak ada,
-tulis "tidak ada".
+EXP-02, RM1 seed 42 dengan konfigurasi yang sudah diperbaiki.

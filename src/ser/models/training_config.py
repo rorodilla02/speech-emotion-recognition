@@ -86,6 +86,33 @@ def compile_model(
 
     return model
 
+class MonitorGuard(keras.callbacks.Callback):
+    """
+    Menghentikan training bila metrik yang dipantau callback lain tidak
+    tersedia pada log epoch pertama.
+
+    Keras hanya memberi peringatan ketika nama monitor tidak dikenal,
+    sehingga early stopping dan model checkpoint dapat gagal berfungsi
+    tanpa disadari sampai seluruh epoch selesai dijalankan.
+    """
+
+    def __init__(self, monitor: str = MONITOR_METRIC):
+        super().__init__()
+        self.monitor = monitor
+
+    def on_epoch_end(self, epoch: int, logs: dict | None = None):
+        if epoch > 0:
+            return
+
+        logs = logs or {}
+
+        if self.monitor not in logs:
+            raise KeyError(
+                f"Metrik pantauan '{self.monitor}' tidak tersedia. "
+                f"Metrik yang ada: {sorted(logs.keys())}. "
+                "Training dihentikan agar early stopping dan model "
+                "checkpoint tidak berjalan tanpa efek."
+            )
 
 def build_callbacks(
     output_dir: Path,
@@ -102,6 +129,7 @@ def build_callbacks(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     return [
+        MonitorGuard(MONITOR_METRIC),
         keras.callbacks.EarlyStopping(
             monitor=MONITOR_METRIC,
             mode=MONITOR_MODE,
