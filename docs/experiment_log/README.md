@@ -19,8 +19,8 @@ run, bukan satu berkas untuk satu checkpoint.
 
 | ID | Tanggal | Skenario | Seed | Macro F1 uji | Status | Keterangan |
 |----|---------|----------|------|--------------|--------|------------|
-| | | | | | | |
-
+| 01 | 2026-08-02 | RM1 | 42 | — | gagal | `MONITOR_METRIC` salah tulis, callback tidak berfungsi |
+| 02 | 2026-08-02 | RM1 | 42 | 0,7886 / 0,6091 | berhasil | Model of record. TESS 1,0000 karena 99,6% irisan (speaker, kata) |
 ## Hubungan dengan development log
 
 | Berkas | Isi |
