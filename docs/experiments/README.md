@@ -33,9 +33,14 @@ run, bukan satu berkas untuk satu checkpoint.
 | 12 | 2026-08-03 | RM2 fold_3 | 42 | 0,1417 | berhasil | Uji RAVDESS, selisih -0,3243 |
 | 13 | 2026-08-03 | RM2 fold_3 | 43 | 0,1201 | berhasil | Uji RAVDESS, selisih -0,3459 |
 | 14 | 2026-08-03 | RM2 fold_3 | 44 | 0,1498 | berhasil | Uji RAVDESS, selisih -0,3162 |
+| 15 | 2026-08-03 | RM3 | 42 | 0,3002 / 0,4313 | berhasil | Model of record, keluar kelas target 51,5% |
+| 16 | 2026-08-03 | RM3 | 43 | 0,2811 / 0,4162 | berhasil | Pembanding variansi, keluar kelas target 52,2% |
+| 17 | 2026-08-03 | RM3 | 44 | 0,2775 / 0,3699 | berhasil | Pembanding variansi, keluar kelas target 44,2% |
+| 18 | 2026-08-03 | RM3 | 45 | 0,3085 / 0,4105 | berhasil | Pembanding variansi, keluar kelas target 46,0% |
+| 19 | 2026-08-03 | RM3 | 46 | 0,2724 / 0,3661 | berhasil | Pembanding variansi, keluar kelas target 44,7% |
 
-Kolom Macro F1 pada RM1 ditulis dua angka, yaitu gabungan lalu rata-rata
-antar korpus. Pada RM2 korpus ujinya tunggal sehingga hanya satu angka.
+Kolom Macro F1 pada RM1 ditulis dua angka, yaitu gabungan lalu rata-rata antar korpus. Pada RM2 korpus ujinya tunggal sehingga hanya satu angka.
+Pada RM3 ditulis mode 1 lalu mode 2.
 
 ## Rekapitulasi
 
@@ -48,9 +53,11 @@ antar korpus. Pada RM2 korpus ujinya tunggal sehingga hanya satu angka.
 | RM2 fold_1 | SAVEE | 0,1303 | 0,0115 | 0,1191-0,1420 |
 | RM2 fold_2 | TESS | 0,2329 | 0,0906 | 0,1543-0,3320 |
 | RM2 fold_3 | RAVDESS | 0,1372 | 0,0154 | 0,1201-0,1498 |
+| RM3 mode 1 | INESCO | 0,2879 | 0,0156 | 0,2724-0,3085 |
+| RM3 mode 2 | INESCO | 0,3988 | 0,0292 | 0,3661-0,4313 |
+| RM3 prediksi ke luar kelas target | INESCO | 47,7% | - | 44,3%-52,2% |
 
-Sumber: `data/models/rm1/seed_summary.csv` dan
-`data/models/rm2/rm2_summary.csv`.
+Sumber: `data/models/rm1/seed_summary.csv`, `data/models/rm2/rm2_summary.csv`, dan `data/models/rm3/rm3_summary.csv`.
 
 ## Fase Eksplorasi
 

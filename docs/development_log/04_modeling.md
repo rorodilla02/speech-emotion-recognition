@@ -370,13 +370,14 @@ Jumlah seed ditentukan setelah durasi satu kali training terukur:
 
 ## Komposisi Data
 
-_(diisi setelah checkpoint dijalankan)_
+| Subset | Jumlah asli | Rincian per korpus | Setelah augmentasi |
+|--------|-------------|--------------------|--------------------|
+| Train | 3203 | ravdess 884, savee 360, tess 1959 | 6406 sampel (3203 asli + augmentasi) |
+| Validation | 628 | ravdess 208, tess 420 | tanpa augmentasi |
+| Test | 697 | ravdess 156, savee 120, tess 421 | tanpa augmentasi |
 
-| Subset | Jumlah asli | Jumlah setelah augmentasi |
-|--------|-------------|---------------------------|
-| Train | 3203 berkas asli | {'ravdess': 884, 'savee': 360, 'tess': 1959} |
-| Validation | 628 berkas asli | {'ravdess': 208, 'tess': 420} |
-| Test | 697 berkas asli | {'ravdess': 156, 'savee': 120, 'tess': 421} |
+Data validasi tidak memuat SAVEE. Penyebab dan konsekuensinya diuraikan
+pada bagian Temuan Awal di atas.
 
 ## Hasil
 
@@ -593,7 +594,7 @@ confound tambahan yang sudah dicatat pada subbab 3.4.
 
 Status:
 
-⬜ Belum dikerjakan
+✅ Completed
 
 ## Skenario
 
@@ -624,15 +625,19 @@ kesalahan yang luput dari pengukuran.
 
 ## Baseline Pembanding
 
-| Pembanding | Nilai | Keterangan |
-|-----------|-------|------------|
-| Chance level mode 1 | 0,1429 | penebak acak tujuh kelas |
-| Chance level mode 2 | 0,3333 | penebak acak tiga kelas |
-| RM1 pada tiga kelas yang sama | dihitung ulang | dari `predictions.csv` RM1, dibatasi Angry, Happy, dan Sad |
+Chance level untuk macro F1-score tidak sama dengan chance level untuk accuracy. Penebak acak atas n kelas memperoleh recall 1/n pada tiap kelas target, sedangkan precision-nya sama dengan proporsi kelas tersebut pada data uji. Nilai berikut dihitung dari distribusi kelas INESCO yang sebenarnya, yaitu Angry 759, Happy 843, dan Sad 796.
 
-Baris ketiga merupakan pembanding paling sah, karena menyamakan ruang kelas
-antara RM1 dan RM3 sehingga selisihnya murni mencerminkan perpindahan
-bahasa, bukan perbedaan jumlah kelas.
+| Pembanding | Accuracy | Macro F1 |
+|-----------|----------|----------|
+| Penebak acak, mode 1 (tujuh kelas) | 0,1429 | 0,1999 |
+| Penebak acak, mode 2 (tiga kelas) | 0,3333 | 0,3332 |
+
+Pembanding utama bukan chance level, melainkan RM1 pada tiga kelas yang sama **tanpa TESS**. TESS dikeluarkan karena data ujinya tidak independen, sehingga menyertakannya akan melebih-lebihkan penurunan lintas-bahasa.
+
+| Pembanding RM1, tiga kelas | Mode 1 | Mode 2 | n |
+|---------------------------|--------|--------|---|
+| Seluruh korpus | 0,8398 | 0,8665 | 297 |
+| Tanpa TESS | 0,5350 | 0,6605 | 117 |
 
 ## Dua Mode Pelaporan
 
@@ -654,14 +659,67 @@ tersebut menyimpan probabilitas seluruh tujuh kelas per berkas audio.
 
 ## Hasil
 
-_(diisi setelah checkpoint dijalankan)_
+Lima model RM1 dievaluasi tanpa pelatihan ulang. Data uji 2.398 berkas, seluruhnya INESCO.
 
-| Mode | Accuracy | Macro F1 |
-|------|----------|----------|
-| 1 (tujuh kelas) | | |
-| 2 (tiga kelas) | | |
+| Mode | Accuracy | Macro F1 | SD | Rentang | Rasio terhadap chance |
+|------|----------|----------|-----|---------|----------------------|
+| 1 (tujuh kelas) | 0,2321 | 0,2879 | 0,0156 | 0,2724-0,3085 | 1,44x |
+| 2 (tiga kelas) | 0,4170 | 0,3988 | 0,0292 | 0,3661-0,4313 | 1,20x |
 
-Chance level tiga kelas: 33.33%
+Prediksi yang jatuh ke kelas di luar tiga kelas target pada mode 1: rerata 47,7 persen, rentang 44,3 sampai 52,2 persen.
+
+### Perbandingan terhadap RM1
+
+| Mode | RM1 tiga kelas tanpa TESS | RM3 | Selisih |
+|------|---------------------------|-----|---------|
+| 1 | 0,5350 | 0,2879 | -0,2471 |
+| 2 | 0,6605 | 0,3988 | -0,2617 |
+
+Selisih pada kedua mode hampir sama, sehingga besaran penurunan tidak
+bergantung pada cara perhitungan.
+
+Sumber angka: `data/models/rm3/rm3_summary.csv` dan
+`data/models/rm3/rm1_baseline_target_classes.csv`.
+
+## Temuan
+
+**Model berada di atas chance, tetapi dengan margin tipis.** Rasio terhadap
+chance hanya 1,44 kali pada mode 1 dan 1,20 kali pada mode 2, dibandingkan
+2,0 sampai 3,1 kali pada RM1. Kemampuan pengenalan emosi pada bahasa yang
+belum pernah dilihat model bersifat lemah namun tidak nol.
+
+**Hampir separuh prediksi jatuh ke kelas yang tidak ada pada korpus uji.**
+Rerata 47,7 persen ucapan berbahasa Indonesia diberi label emosi di luar
+Angry, Happy, dan Sad. Angka ini menjadi justifikasi kuantitatif bagi
+keberadaan dua mode pelaporan.
+
+**Membetulkan arah prediksi tidak menyelesaikan masalah.** Pembatasan pada
+mode 2 menghilangkan seluruh 47,7 persen kesalahan arah tersebut, tetapi
+macro F1 hanya naik 0,1109. Model bukan sekadar salah alamat, melainkan
+memang belum mengenali emosinya.
+
+**Tidak terjadi kolaps prediksi, berbeda dari RM2.** Distribusi prediksi
+mode 2 pada seed 42: Happy 51,7 persen, Angry 30,7 persen, Sad 17,6 persen.
+Ketiga kelas terpakai dan tidak ada kelas ber-F1 nol, sedangkan RM2 fold 1
+terkonsentrasi 89,2 persen pada dua kelas dengan Neutral bernilai nol.
+
+Pola kesalahannya koheren. Sad memiliki precision tertinggi (0,5414) dengan
+recall terendah (0,2877), sehingga model jarang menebak Sad namun cukup
+sering benar ketika menebaknya. Happy sebaliknya, recall 0,5836 dengan
+precision 0,3968, sehingga berperan sebagai kelas serap. Perilaku ini khas
+classifier yang masih bekerja dengan bias, bukan classifier yang runtuh.
+
+## Perbandingan Ternormalisasi Ketiga Skenario
+
+Perbandingan antar skenario tidak sah dilakukan pada nilai absolut, sebab jumlah kelasnya berbeda. Normalisasi terhadap chance macro F1 masing-masing:
+
+| Skenario | Macro F1 | Chance | Rasio |
+|----------|----------|--------|-------|
+| RM1, RAVDESS dan SAVEE | 0,4392 | 0,1429 | 3,07x |
+| RM2, rerata tiga fold | 0,1668 | 0,1429 | 1,17x |
+| RM3, mode 2 | 0,3988 | 0,3332 | 1,20x |
+
+Nilai RM3 yang lebih tinggi dari RM2 secara absolut **tidak** berarti generalisasi lintas-bahasa lebih baik daripada lintas-korpus. Setelah dinormalisasi, keduanya sama-sama berada sekitar 1,2 kali chance, sementara within-corpus berada pada 3,07 kali.
 
 ## Catatan Penafsiran
 
@@ -675,13 +733,20 @@ durasi 4 detik. Proporsinya dilaporkan sebagai keterbatasan.
 
 ## Validasi
 
-- [ ] Model yang dipakai benar-benar model hasil RM1, bukan model baru
-- [ ] INESCO tidak pernah dipakai pada training maupun validation
-- [ ] Kedua mode dilaporkan, bukan hanya salah satu
+- [x] Model yang dipakai benar-benar model hasil RM1, bukan model baru
+- [x] INESCO tidak pernah dipakai pada training maupun validation
+- [x] Kedua mode dilaporkan, bukan hanya salah satu
+- [x] Macro F1 dihitung terhadap tiga kelas target, bukan tujuh
+- [x] Chance level macro F1 dihitung dari distribusi kelas yang sebenarnya
+- [x] Kelima model RM1 dievaluasi untuk estimasi variansi
 
 ## Output
 
-- `data/models/rm3/`
+- `src/ser/models/rm3_evaluator.py`
+- `scripts/15_evaluate_rm3.py`
+- `data/models/rm3/seed_42/` sampai `seed_46/`
+- `data/models/rm3/rm3_summary.csv`
+- `data/models/rm3/rm1_baseline_target_classes.csv`
 
 ---
 
@@ -728,34 +793,23 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 
 # 🏗 Keputusan Arsitektur
 
-- Bentuk input model diturunkan dari `FEATURE_SHAPE`, bukan ditulis ulang,
-  agar perubahan parameter ekstraksi fitur otomatis terdeteksi.
+- Bentuk input model diturunkan dari `FEATURE_SHAPE`, bukan ditulis ulang, agar perubahan parameter ekstraksi fitur otomatis terdeteksi.
 - Bias pada Conv2D dan Dense dimatikan karena diikuti BatchNormalization.
-- Kernel dibiarkan simetris 3x3; asimetri sumbu ditangani lewat ukuran
-  pooling, bukan lewat bentuk kernel.
+- Kernel dibiarkan simetris 3x3; asimetri sumbu ditangani lewat ukuran pooling, bukan lewat bentuk kernel.
 - Jumlah filter berhenti pada 128 sebagai konsekuensi batas VRAM.
-- Flatten dipertahankan sebagai jembatan menuju lapisan klasifikasi, sesuai
-  uraian subbab 2.4.2, bukan diganti global pooling.
-- Label di-one-hot agar macro F1-score dapat dipakai sebagai metrik seleksi
-  model selama training, bukan hanya dihitung setelah training.
-- Konfigurasi training identik untuk seluruh skenario, sehingga perbedaan
-  hasil murni berasal dari komposisi data.
-- Seluruh callback memantau metrik validasi; skenario tanpa data validasi
-  ditolak secara eksplisit oleh kode.
-- Evaluasi menyimpan prediksi per berkas audio, bukan hanya metrik agregat,
-  sehingga seluruh analisis Bab 4 dapat dihitung ulang tanpa melatih ulang.
-- Model of record adalah hasil seed 42; seed lain hanya untuk pelaporan
-  variansi.
+- Flatten dipertahankan sebagai jembatan menuju lapisan klasifikasi, sesuai uraian subbab 2.4.2, bukan diganti global pooling.
+- Label di-one-hot agar macro F1-score dapat dipakai sebagai metrik seleksi model selama training, bukan hanya dihitung setelah training.
+- Konfigurasi training identik untuk seluruh skenario, sehingga perbedaan hasil murni berasal dari komposisi data.
+- Seluruh callback memantau metrik validasi; skenario tanpa data validasi ditolak secara eksplisit oleh kode.
+- Evaluasi menyimpan prediksi per berkas audio, bukan hanya metrik agregat, sehingga seluruh analisis Bab 4 dapat dihitung ulang tanpa melatih ulang.
+- Model of record adalah hasil seed 42; seed lain hanya untuk pelaporan variansi.
 - `class_weight` tidak dipakai, mengikuti mitigasi risiko R-02.
-- `enable_op_determinism` diaktifkan agar seed benar-benar menghasilkan
-  model yang sama, sesuai KNF-06.
-- Seed pemisahan validasi internal dikunci pada 42 dan terpisah dari seed
-  training, agar komposisi validasi identik pada seluruh seed dan variasi
-  antar-run murni berasal dari inisialisasi bobot.
-- Macro F1 pada RM3 dihitung terhadap tiga kelas target, bukan tujuh, agar
-  kelas bersupport nol tidak menyeret rerata.
-- Seluruh model RM1 dievaluasi pada RM3, bukan hanya model of record, karena
-  evaluasi tidak memerlukan training.
+- `enable_op_determinism` diaktifkan agar seed benar-benar menghasilkan model yang sama, sesuai KNF-06.
+- Seed pemisahan validasi internal dikunci pada 42 dan terpisah dari seed training, agar komposisi validasi identik pada seluruh seed dan variasi antar-run murni berasal dari inisialisasi bobot.
+- Macro F1 pada RM3 dihitung terhadap tiga kelas target, bukan tujuh, agar kelas bersupport nol tidak menyeret rerata.
+- Seluruh model RM1 dievaluasi pada RM3, bukan hanya model of record, karena evaluasi tidak memerlukan training.
+- Pembanding RM3 memakai RM1 tiga kelas tanpa TESS, bukan seluruh korpus, karena data uji TESS tidak independen dan akan melebih-lebihkan penurunan lintas-bahasa.
+- Perbandingan antar skenario dilakukan pada rasio terhadap chance masing-masing, bukan pada nilai absolut, karena jumlah kelasnya berbeda.
 
 ---
 
@@ -795,8 +849,9 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 
 ## Checkpoint 5 — RM3
 
-- [ ] Mode 1
-- [ ] Mode 2
+- [x] Mode 1
+- [x] Mode 2
+- [x] Baseline RM1 pada ruang kelas yang sama
 
 ## Checkpoint 6 — Analisis
 
@@ -809,43 +864,21 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 
 # Known Issues
 
-- Data validation RM1 tidak memuat satu pun berkas SAVEE, karena SAVEE
-  hanya punya 4 speaker dan seluruhnya terpakai untuk latih dan uji.
-  Seleksi model karenanya buta terhadap korpus beraksen British.
-- RM2 dan RM3 memiliki `validation.csv` kosong sesuai rancangan split.
-  Ditangani lewat validation internal dari data latih (keputusan
-  checkpoint 2), bukan lewat penghapusan early stopping.
-- `data/splits/rm3/train.csv` berisi seluruh korpus berbahasa Inggris,
-  namun sesuai draf Tabel 3.1 (Bab 3, belum diajukan ke dospem) RM3
-  memakai model hasil RM1 tanpa pelatihan ulang. Diputuskan mengikuti
-  Opsi A: file tersebut tidak dipakai untuk training apa pun.
-  `SplitGenerator` tetap menghasilkannya sebagai artefak, tapi perlu
-  dicatat eksplisit di 04_modeling.md dan subbab 3.4.2 bahwa
-  `rm3/train.csv` sengaja tidak dipakai, supaya tidak terlihat seperti
-  file yang lupa dipakai.
+- Data validation RM1 tidak memuat satu pun berkas SAVEE, karena SAVEE hanya punya 4 speaker dan seluruhnya terpakai untuk latih dan uji. Seleksi model karenanya buta terhadap korpus beraksen British.
+- RM2 dan RM3 memiliki `validation.csv` kosong sesuai rancangan split. Ditangani lewat validation internal dari data latih (keputusan checkpoint 2), bukan lewat penghapusan early stopping.
+- `data/splits/rm3/train.csv` berisi seluruh korpus berbahasa Inggris, namun sesuai draf Tabel 3.1 (Bab 3, belum diajukan ke dospem) RM3 memakai model hasil RM1 tanpa pelatihan ulang. Diputuskan mengikuti Opsi A: file tersebut tidak dipakai untuk training apa pun. `SplitGenerator` tetap menghasilkannya sebagai artefak, tapi perlu dicatat eksplisit di 04_modeling.md dan subbab 3.4.2 bahwa `rm3/train.csv` sengaja tidak dipakai, supaya tidak terlihat seperti file yang lupa dipakai.
 - Validasi kebocoran data pada `FeatureValidator` hanya mencakup RM1.
-- Pemeriksaan `Feature Shape` dan `Feature Dtype` tidak memvalidasi isi
-  data, hanya dimensi larik.
-- Wilayah zero padding pada sumbu waktu bernilai konstan 0.0 dan
-  proporsinya berkorelasi dengan identitas korpus, sehingga berpotensi
-  menjadi pintasan yang dipelajari model. Diuji secara kuantitatif pada
-  checkpoint 6 memakai kolom `real_frames`.
-- Subbab 2.4.2 belum memuat Batch Normalization, Dropout, categorical
-  cross-entropy, dan Adam. Penambahan dikerjakan setelah Modeling selesai.
-- Data uji TESS tidak independen secara akustik maupun leksikal. Irisan
-  pasangan speaker dan kata pembawa antara train dan test mencapai 99,6
-  persen, karena TESS hanya memiliki dua speaker.
-- Metrik validasi RM1 memiliki daya pisah rendah terhadap kemampuan
-  lintas-speaker, sehingga titik henti early stopping bervariasi 27 sampai
-  52 epoch pada tingkat skor validasi yang setara.
-- Data uji RM2 tidak identik dengan data uji RM1. Pada RM2, korpus uji
-  dipakai seluruhnya (SAVEE 480 berkas, RAVDESS 1.248, TESS 2.800),
-  sedangkan pada RM1 hanya sebagian (SAVEE 120, RAVDESS 156, TESS 421).
-  Perbandingan langsung karenanya tidak sepenuhnya setara. Ditangani pada
-  checkpoint 6 dengan menghitung ulang metrik RM2 yang dibatasi pada berkas
-  uji RM1, memakai kolom `filename` pada `predictions.csv`.
+- Pemeriksaan `Feature Shape` dan `Feature Dtype` tidak memvalidasi isi data, hanya dimensi larik.
+- Wilayah zero padding pada sumbu waktu bernilai konstan 0.0 dan proporsinya berkorelasi dengan identitas korpus, sehingga berpotensi menjadi pintasan yang dipelajari model. Diuji secara kuantitatif pada checkpoint 6 memakai kolom `real_frames`.
+- Subbab 2.4.2 belum memuat Batch Normalization, Dropout, categorical cross-entropy, dan Adam. Penambahan dikerjakan setelah Modeling selesai.
+- Data uji TESS tidak independen secara akustik maupun leksikal. Irisan pasangan speaker dan kata pembawa antara train dan test mencapai 99,6 persen, karena TESS hanya memiliki dua speaker.
+- Metrik validasi RM1 memiliki daya pisah rendah terhadap kemampuan lintas-speaker, sehingga titik henti early stopping bervariasi 27 sampai 52 epoch pada tingkat skor validasi yang setara.
+- Data uji RM2 tidak identik dengan data uji RM1. Pada RM2, korpus uji dipakai seluruhnya (SAVEE 480 berkas, RAVDESS 1.248, TESS 2.800), sedangkan pada RM1 hanya sebagian (SAVEE 120, RAVDESS 156, TESS 421). Perbandingan langsung karenanya tidak sepenuhnya setara. Ditangani pada checkpoint 6 dengan menghitung ulang metrik RM2 yang dibatasi pada berkas uji RM1, memakai kolom `filename` pada `predictions.csv`.
 - Model fold 2 RM2 belum sepenuhnya konvergen. Macro F1 validasinya hanya 0,4553 sampai 0,5322 dan early stopping berhenti pada epoch 26 sampai 33, sehingga variansi antar-seednya jauh lebih besar dari fold lain.
 - Tabel 3.1 pada Bab 3 menyebut RM1 dilatih pada gabungan RAVDESS dan SAVEE. Seharusnya RAVDESS, TESS, dan SAVEE. Perlu dikoreksi saat penulisan subbab 3.5.
+- Data uji RM3 berjumlah 2.398 berkas, sedangkan pembanding RM1 pada tiga kelas tanpa TESS hanya 117 berkas. Perbedaan ukuran ini tidak membatalkan perbandingan karena macro F1-score tidak sensitif terhadap ukuran sampel, tetapi perlu disebut pada Bab 4.
+- Chance level untuk macro F1-score berbeda dari chance level untuk accuracy. Kolom `chance_level` pada versi awal `rm3_evaluator.py` keliru memakai nilai chance accuracy. Sudah diperbaiki menjadi dua kolom terpisah, dan berkas metrik yang terlanjur dibuat ditambal tanpa evaluasi ulang.
+- Klip mencapai batas 401 frame : 422 dari 2398 (17.6%) Klip tersebut berdurasi minimal 4 detik sehingga mengalami center crop
 
 ---
 
