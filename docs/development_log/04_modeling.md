@@ -18,6 +18,10 @@ Spesifikasi input yang sudah terkunci dari tahap Data Preparation:
 | Urutan label | Angry, Disgust, Fear, Happy, Neutral, Sad, Surprise |
 | Total baris fitur | 11454 (6926 processed + 4528 augmented) |
 
+## Pemetaan terhadap Fase CRISP-DM
+
+Berkas ini memuat pekerjaan yang membentang pada dua fase. Checkpoint 1 dan 2 serta bagian pelatihan pada checkpoint 3 sampai 5 termasuk fase *modeling*. Bagian pengujian pada data uji beserta seluruh checkpoint 6 termasuk fase *evaluation*, sesuai batasan pada subbab 2.8.4 dan 2.8.5. Pemisahan berkas tidak dilakukan agar riwayat checkpoint tetap runut.
+
 ## Konvensi Lokasi Berkas
 
 Draf awal log ini menyebut `src/ser/modeling/`, `artifacts/models/`, dan
@@ -213,9 +217,7 @@ seed, data, dan konfigurasinya identik. Pada percobaan awal, dua run dengan
 seed sama menghasilkan selisih macro F1 hingga 0,0793 pada RAVDESS dan
 0,0741 pada SAVEE.
 
-Konsekuensinya, persyaratan reproduktibilitas KNF-06 tidak terpenuhi tanpa
-pengaturan ini. Seluruh hasil yang dilaporkan pada Bab 4 diperoleh dengan
-determinisme aktif.
+Konsekuensinya, persyaratan reproduktibilitas KNF-06 tidak terpenuhi tanpa pengaturan ini. Seluruh hasil yang dilaporkan pada Bab 4 diperoleh dengan determinisme aktif. Biayanya waktu training meningkat dari 9,0 detik menjadi 16,9 detik per epoch, yaitu sekitar 1,9 kali lipat, dan dinilai sepadan dengan terpenuhinya persyaratan reproduktibilitas.
 
 ## Hasil Uji Konfigurasi
 
@@ -280,18 +282,10 @@ Sebelum determinisme diaktifkan, dijalankan sembilan run RM1 sebagai
 eksplorasi. Angka metriknya tidak dipakai pada Bab 4, tetapi empat temuan
 berikut mendasari keputusan perancangan dan tetap berlaku.
 
-1. Data uji TESS tidak independen. Irisan nama berkas train-test nol, namun
-   270 dari 271 pasangan speaker dan kata pembawa pada data uji juga
-   terdapat pada data latih (99,6 persen).
-2. Metrik validasi RM1 memiliki daya pisah rendah terhadap kemampuan
-   lintas-speaker. Rentang macro F1 validasi antar-seed hanya 0,0042,
-   sementara rentang macro F1 SAVEE pada data uji mencapai 0,1063.
-3. ReduceLROnPlateau menstabilkan tahap akhir training. Tanpa penurunan
-   learning rate, fluktuasi val_macro_f1 pada 15 epoch terakhir mencapai
-   kurang lebih 0,036; dengan callback aktif menyempit menjadi kurang lebih
-   0,011 pada puncak yang setara.
-4. Nondeterminisme cuDNN berdampak nyata, sebagaimana diuraikan pada
-   bagian Determinisme dan Reproduktibilitas.
+1. Data uji TESS tidak independen. Irisan nama berkas train-test nol, namun 270 dari 271 pasangan speaker dan kata pembawa pada data uji juga terdapat pada data latih (99,6 persen).
+2. Metrik validasi RM1 memiliki daya pisah rendah terhadap kemampuan lintas-speaker. Temuan ini kemudian dikuantifikasi ulang pada run deterministik lewat korelasi antara macro F1 validasi dan macro F1 SAVEE pada data uji.
+3. ReduceLROnPlateau menstabilkan tahap akhir training. Tanpa penurunan learning rate, fluktuasi val_macro_f1 pada 15 epoch terakhir mencapai kurang lebih 0,036; dengan callback aktif menyempit menjadi kurang lebih 0,011 pada puncak yang setara.
+4. Nondeterminisme cuDNN berdampak nyata, sebagaimana diuraikan pada bagian Determinisme dan Reproduktibilitas.
 
 Rerata fase eksplorasi dan rerata deterministik hampir identik (SAVEE 0,4136
 berbanding 0,4123; RAVDESS 0,4695 berbanding 0,4660), sehingga run eksplorasi
@@ -386,15 +380,18 @@ antar-run, bukan untuk memilih model terbaik.
 
 | Metrik | Seed 42 | Rerata 5 seed | SD | Rentang |
 |--------|---------|---------------|-----|---------|
-| Macro F1 uji, gabungan | 0,7886 | 0,7974 | 0,0133 | 0,0298 |
-| Macro F1 uji, rata-rata antar korpus | 0,6091 | 0,6323 | 0,0245 | 0,0571 |
-| Accuracy uji, gabungan | 0,7891 | | | |
-| Macro F1 validasi | 0,8408 | 0,8404 | 0,0021 | 0,0042 |
-| Epoch terbaik | 52 | 39 | | 27-52 |
-| Waktu per epoch | 9,0 detik | ±9,5 detik | | |
-| Puncak VRAM | 1,01 GB | | | |
+| Macro F1 uji, gabungan | 0,8004 | 0,7925 | 0,0108 | 0,0250 |
+| Macro F1 uji, rata-rata antar korpus | 0,6474 | 0,6256 | 0,0207 | 0,0519 |
+| Accuracy uji, gabungan | 0,7991 | 0,7914 | | |
+| Macro F1 validasi | 0,8553 | 0,8397 | 0,0129 | 0,0343 |
+| Epoch dijalankan | 60 | 54,2 | | 34-64 |
+| Epoch terbaik | 48 | 42,2 | | 22-52 |
+| Waktu per epoch | 16,8 detik | 16,9 detik | | |
+| Puncak VRAM | 554 MB | | | |
 | Baseline mayoritas kelas | ±14,40% | | | |
 | Chance level | 14,29% | | | |
+
+Puncak pemakaian VRAM diukur lewat `scripts/12_training_config.py` yang memakai arsitektur dan batch size identik, bukan dari run RM1 penuh. Pemakaian VRAM ditentukan oleh ukuran batch dan arsitektur, bukan oleh jumlah data latih, sebab data disimpan pada RAM host dan dikirim ke GPU per batch. Skrip pelatihan tidak mencatat pemakaian VRAM secara otomatis, dan hal ini dicatat sebagai keterbatasan instrumentasi.
 
 ### Per Korpus
 
@@ -410,32 +407,21 @@ Sumber angka: `data/models/rm1/seed_summary.csv`.
 
 ## Temuan
 
-**Angka gabungan tidak mewakili kemampuan model.** Komposisi data uji timpang,
-TESS 60,4 persen dari 697 sampel. Karena TESS praktis sempurna, angka
-gabungan 0,7974 lebih menggambarkan proporsi korpus daripada kemampuan
-model. Performa pada kondisi speaker-independent berada di kisaran 0,41
-sampai 0,49.
+**Angka gabungan tidak mewakili kemampuan model.** Komposisi data uji timpang, TESS 60,4 persen dari 697 sampel. Karena TESS praktis sempurna, angka gabungan 0,7925 lebih menggambarkan proporsi korpus daripada kemampuan model. Performa pada kondisi speaker-independent berada di kisaran 0 41 sampai 0,47.
 
-**TESS tidak independen.** Irisan nama berkas train-test nol, sehingga tidak
-ada kebocoran berkas. Namun 270 dari 271 pasangan speaker dan kata pembawa
+**TESS tidak independen.** Irisan nama berkas train-test nol, sehingga tidak ada kebocoran berkas. Namun 270 dari 271 pasangan speaker dan kata pembawa
 pada data uji juga terdapat pada data latih, yaitu 99,6 persen. TESS hanya
 memiliki dua speaker sehingga pemisahan berbasis speaker tidak mungkin
 dilakukan. Satu kesalahan pada seed 46 menunjukkan model tetap melakukan
 klasifikasi, hanya pada tugas yang terlalu mudah.
 
-**Metrik validasi lemah membedakan kemampuan lintas-speaker.** Rentang macro
-F1 validasi antar-seed hanya 0,0042, sementara rentang macro F1 SAVEE pada
-data uji mencapai 0,1063, yaitu dua puluh lima kali lipat. Data validasi
-tidak memuat SAVEE, dan bagian TESS di dalamnya bernilai konstan sehingga
-tidak ikut membedakan. Rentang epoch terbaik 27 sampai 52 pada tingkat skor
-validasi yang setara menegaskan kurva validasi sudah datar sejak epoch
-pertengahan.
+**Metrik validasi tidak informatif terhadap kemampuan pada SAVEE.** Korelasi antara macro F1 validasi dan macro F1 SAVEE pada data uji bernilai -0,1495 pada lima seed, sedangkan terhadap RAVDESS +0,3425. Seed dengan skor validasi terendah (0,8210) justru memperoleh SAVEE tertinggi (0,4819), sementara seed dengan skor validasi tinggi (0,8451) memperoleh SAVEE terendah (0,3490). Penyebabnya, data validasi tidak memuat SAVEE sama sekali, dan bagian TESS di dalamnya praktis konstan sehingga tidak ikut membedakan antar model.
 
-**ReduceLROnPlateau menstabilkan tahap akhir.** Pada EXP-01 yang berjalan
-tanpa penurunan learning rate, fluktuasi val_macro_f1 pada 15 epoch terakhir
-mencapai kurang lebih 0,036. Pada EXP-02 dengan callback aktif, fluktuasi
-menyempit menjadi kurang lebih 0,011 dengan puncak yang praktis sama.
-Konfigurasi dipertahankan.
+Rentang macro F1 validasi antar-seed 0,0343, sedangkan rentang macro F1 SAVEE pada data uji 0,1329 atau 3,87 kali lipat. Rentang epoch terbaik 22 sampai 52 pada tingkat skor validasi yang setara menegaskan kurva validasi sudah datar sejak epoch pertengahan.
+
+**ReduceLROnPlateau menstabilkan tahap akhir.** Pada fase eksplorasi, run yang berjalan tanpa penurunan learning rate memiliki fluktuasi val_macro_f1 sebesar kurang lebih 0,036 pada 15 epoch terakhir. Dengan callback aktif, fluktuasi menyempit menjadi kurang lebih 0,011 pada puncak yang setara. Konfigurasi dipertahankan.
+
+**Pemantauan val_macro_f1 lebih tepat daripada val_loss.** Kurva belajar seed 42 menunjukkan val_loss meningkat sejak sekitar epoch 15, sementara val_macro_f1 tetap datar bahkan sedikit naik sampai epoch 48. Model menjadi overconfident sehingga loss membesar, tetapi urutan kelas hasil argmax tetap benar sehingga macro F1-score bertahan. Bila early stopping memantau val_loss, training akan berhenti sekitar epoch 15 sampai 20 dan kehilangan sekitar 30 epoch pembelajaran. Konsekuensi lain, probabilitas keluaran model tidak terkalibrasi, sehingga prototipe tidak menampilkannya sebagai tingkat keyakinan.
 
 ## Acuan Penilaian RM2
 
@@ -754,7 +740,7 @@ durasi 4 detik. Proporsinya dilaporkan sebagai keterbatasan.
 
 Status:
 
-⬜ Belum dikerjakan
+✅ Completed
 
 ## Tujuan
 
@@ -773,16 +759,42 @@ siap dipakai pada Bab 4.
 | Diagram arsitektur CNN | Checkpoint 1 | Gambar untuk subbab 3.5 |
 | Metrik RM2 dibatasi pada berkas uji RM1 | RM2 tiga fold | Perbandingan setara terhadap RM1 |
 | Analisis arah kolaps prediksi | RM2 tiga fold | Distribusi prediksi dan kelas ber-F1 nol |
+| Metrik per kelas per korpus lima seed | RM1 | Tabel Bab 4 dengan simpangan baku |
 
 Diagram arsitektur dibuat sebagai SVG orisinal, mengikuti pola diagram Bab 2,
 bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 `data/models/architecture_layers.csv`.
 
+## Temuan Analisis
+
+**Proporsi padding merupakan penanda identitas korpus, tetapi bukan
+pintasan di dalam korpus.** Proporsi padding rerata SAVEE 0,1404,
+jauh berbeda dari RAVDESS 0,5364 dan TESS 0,5031. Perbedaan ini bersumber
+dari panjang kalimat, SAVEE memakai kalimat panjang sedangkan RAVDESS dan
+TESS memakai frasa pendek. Korelasi antara proporsi padding dan kebenaran
+prediksi hanya -0,07 sampai -0,18, sehingga model tidak memanfaatkannya
+sebagai pintasan pada skenario within-corpus. Namun pada RM2, perbedaan ini
+menjadi pergeseran distribusi pada sifat yang tidak berkaitan dengan emosi,
+dan menjadi confound tambahan yang kini terkuantifikasi.
+
+**Kesulitan kelas sebagian besar bergantung korpus.** Berdasarkan rerata lima seed, Fear merupakan kelas tersulit pada RAVDESS (0,2567) maupun SAVEE (0,2512), sehingga kesulitannya nyata dan tidak bergantung korpus. Sebaliknya, Disgust bernilai 0,6994 pada RAVDESS namun hanya 0,2787 pada
+SAVEE, sedangkan Neutral berkebalikan yaitu 0,3988 pada RAVDESS dan 0,7246 pada SAVEE. Pola ini menguatkan temuan RM2 bahwa representasi yang dipelajari model sebagian besar spesifik terhadap korpus latihnya.
+
+Simpangan baku antar-seed pada tabel ini mencapai 0,1594 pada kasus terburuk, karena support per kelas per korpus hanya 12 sampai 30 berkas. Angka per kelas per korpus karenanya selalu dilaporkan bersama simpangan bakunya, dan tidak dijadikan dasar klaim yang kuat.
+
+**Perbedaan himpunan data uji tidak mengubah simpulan RM1 versus RM2.**
+Perhitungan ulang macro F1-score RM2 yang dibatasi pada berkas uji RM1
+menghasilkan selisih di bawah 0,02 pada delapan dari sembilan run.
+Pengecualiannya fold 1 seed 42 yang turun dari 0,1191 menjadi 0,0751, wajar
+karena jumlah sampelnya menyusut menjadi 120.
+
 ## Validasi
 
-- [ ] Seluruh angka pada tabel bersumber dari file metrik, bukan disalin manual
-- [ ] Urutan label pada confusion matrix konsisten dengan EMOTION_LABELS
-- [ ] Seluruh gambar tersimpan pada resolusi 300 dpi
+- [x] Seluruh angka pada tabel bersumber dari file metrik, bukan disalin manual
+- [x] Urutan label pada confusion matrix konsisten dengan EMOTION_LABELS
+- [x] Seluruh gambar tersimpan pada resolusi 300 dpi
+- [x] Metrik per kelas per korpus dirata-ratakan lima seed
+- [x] Confound padding diuji secara kuantitatif
 
 ## Output
 
@@ -855,10 +867,10 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 
 ## Checkpoint 6 — Analisis
 
-- [ ] Confusion matrix
-- [ ] Learning curve
-- [ ] Tabel metrik Bab 4
-- [ ] Diagram arsitektur
+- [x] Confusion matrix
+- [x] Learning curve
+- [x] Tabel metrik Bab 4
+- [x] Diagram arsitektur
 
 ---
 
@@ -872,13 +884,16 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 - Wilayah zero padding pada sumbu waktu bernilai konstan 0.0 dan proporsinya berkorelasi dengan identitas korpus, sehingga berpotensi menjadi pintasan yang dipelajari model. Diuji secara kuantitatif pada checkpoint 6 memakai kolom `real_frames`.
 - Subbab 2.4.2 belum memuat Batch Normalization, Dropout, categorical cross-entropy, dan Adam. Penambahan dikerjakan setelah Modeling selesai.
 - Data uji TESS tidak independen secara akustik maupun leksikal. Irisan pasangan speaker dan kata pembawa antara train dan test mencapai 99,6 persen, karena TESS hanya memiliki dua speaker.
-- Metrik validasi RM1 memiliki daya pisah rendah terhadap kemampuan lintas-speaker, sehingga titik henti early stopping bervariasi 27 sampai 52 epoch pada tingkat skor validasi yang setara.
+- Metrik validasi RM1 tidak informatif terhadap kemampuan pada SAVEE. Korelasi antara macro F1 validasi dan macro F1 SAVEE pada data uji bernilai -0,1495, karena SAVEE tidak terwakili pada data validasi.
 - Data uji RM2 tidak identik dengan data uji RM1. Pada RM2, korpus uji dipakai seluruhnya (SAVEE 480 berkas, RAVDESS 1.248, TESS 2.800), sedangkan pada RM1 hanya sebagian (SAVEE 120, RAVDESS 156, TESS 421). Perbandingan langsung karenanya tidak sepenuhnya setara. Ditangani pada checkpoint 6 dengan menghitung ulang metrik RM2 yang dibatasi pada berkas uji RM1, memakai kolom `filename` pada `predictions.csv`.
 - Model fold 2 RM2 belum sepenuhnya konvergen. Macro F1 validasinya hanya 0,4553 sampai 0,5322 dan early stopping berhenti pada epoch 26 sampai 33, sehingga variansi antar-seednya jauh lebih besar dari fold lain.
 - Tabel 3.1 pada Bab 3 menyebut RM1 dilatih pada gabungan RAVDESS dan SAVEE. Seharusnya RAVDESS, TESS, dan SAVEE. Perlu dikoreksi saat penulisan subbab 3.5.
 - Data uji RM3 berjumlah 2.398 berkas, sedangkan pembanding RM1 pada tiga kelas tanpa TESS hanya 117 berkas. Perbedaan ukuran ini tidak membatalkan perbandingan karena macro F1-score tidak sensitif terhadap ukuran sampel, tetapi perlu disebut pada Bab 4.
 - Chance level untuk macro F1-score berbeda dari chance level untuk accuracy. Kolom `chance_level` pada versi awal `rm3_evaluator.py` keliru memakai nilai chance accuracy. Sudah diperbaiki menjadi dua kolom terpisah, dan berkas metrik yang terlanjur dibuat ditambal tanpa evaluasi ulang.
-- Klip mencapai batas 401 frame : 422 dari 2398 (17.6%) Klip tersebut berdurasi minimal 4 detik sehingga mengalami center crop
+- Sebanyak 422 dari 2.398 klip INESCO (17,6 persen) mencapai batas 401 frame, sehingga berdurasi minimal 4 detik dan mengalami center crop. Sebagian informasi di luar jendela 4 detik karenanya tidak ikut dievaluasi. Dilaporkan sebagai keterbatasan pada Bab 5.
+- Probabilitas keluaran model tidak terkalibrasi. Val_loss meningkat sejak sekitar epoch 15 sementara val_macro_f1 tetap datar, menandakan model menjadi overconfident. Prototipe tidak menampilkan probabilitas sebagai tingkat keyakinan.
+- Metrik per kelas per korpus memiliki simpangan baku antar-seed hingga 0,1594 karena support per sel hanya 12 sampai 30 berkas.
+- Skrip pelatihan tidak mencatat puncak pemakaian VRAM per run. Angka yang dilaporkan berasal dari pengukuran terpisah memakai arsitektur dan batch size yang sama. Perbaikan instrumentasi tidak dilakukan karena akan menuntut pengulangan seluruh run tanpa mengubah hasil.
 
 ---
 
@@ -899,8 +914,8 @@ Tahap Modeling menghasilkan:
 
 # 🚀 Next Session
 
-1. Checkpoint 5, evaluasi RM3 pada INESCO
-2. Checkpoint 6, analisis hasil dan gambar untuk Bab 4
-3. Implementasi prototipe Streamlit (RM4)
-4. Pengujian fungsional terhadap Tabel 3.5
-5. Revisi subbab 2.4.2 dan penambahan dasar teori yang belum ada
+1. Implementasi prototipe Streamlit, tahap Deployment
+2. Pengujian fungsional terhadap Tabel 3.5
+3. Pengukuran waktu respons sistem
+4. Penulisan Bab 3 subbab 3.5 sampai 3.7, Bab 4, dan Bab 5
+5. Revisi subbab 2.4.2: Batch Normalization, Dropout, categorical cross-entropy, dan Adam

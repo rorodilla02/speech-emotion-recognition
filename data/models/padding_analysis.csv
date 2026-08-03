@@ -1,0 +1,4 @@
+dataset,n,padding_rerata,padding_sd,padding_min,padding_maks,korelasi_padding_benar
+ravdess,156,0.5364,0.0885,0.1496,0.6783,-0.0661
+savee,120,0.1404,0.1602,0.0,0.5337,-0.1841
+tess,421,0.5031,0.0844,0.2643,0.6883,-0.0697
