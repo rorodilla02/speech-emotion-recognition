@@ -201,6 +201,22 @@ peramban terbuka dan sekitar 500 MB saat hanya editor yang berjalan,
 sehingga kapasitas efektif bagi proses training berkisar 3,0 sampai 3,5 GB.
 Ambang peringatan pada skrip ditetapkan 3.000 MB.
 
+## Determinisme dan Reproduktibilitas
+
+`set_global_seed` mengaktifkan `tf.config.experimental.enable_op_determinism()`
+selain menyeragamkan seed Python, NumPy, dan Keras.
+
+Tanpa pengaturan tersebut, sebagian operasi cuDNN menjalankan reduksi dalam
+urutan yang tidak tetap. Selisihnya berada pada digit terakhir, tetapi
+berlipat sepanjang training dan menghasilkan model akhir yang berbeda meski
+seed, data, dan konfigurasinya identik. Pada percobaan awal, dua run dengan
+seed sama menghasilkan selisih macro F1 hingga 0,0793 pada RAVDESS dan
+0,0741 pada SAVEE.
+
+Konsekuensinya, persyaratan reproduktibilitas KNF-06 tidak terpenuhi tanpa
+pengaturan ini. Seluruh hasil yang dilaporkan pada Bab 4 diperoleh dengan
+determinisme aktif.
+
 ## Hasil Uji Konfigurasi
 
 | Aspek | Hasil |
@@ -258,6 +274,29 @@ mungkin ada skenario yang berjalan tanpa validasi tanpa disadari.
 
 Implementasi `ValidationSplitter` dikerjakan pada checkpoint 4.
 
+## Catatan Fase Eksplorasi
+
+Sebelum determinisme diaktifkan, dijalankan sembilan run RM1 sebagai
+eksplorasi. Angka metriknya tidak dipakai pada Bab 4, tetapi empat temuan
+berikut mendasari keputusan perancangan dan tetap berlaku.
+
+1. Data uji TESS tidak independen. Irisan nama berkas train-test nol, namun
+   270 dari 271 pasangan speaker dan kata pembawa pada data uji juga
+   terdapat pada data latih (99,6 persen).
+2. Metrik validasi RM1 memiliki daya pisah rendah terhadap kemampuan
+   lintas-speaker. Rentang macro F1 validasi antar-seed hanya 0,0042,
+   sementara rentang macro F1 SAVEE pada data uji mencapai 0,1063.
+3. ReduceLROnPlateau menstabilkan tahap akhir training. Tanpa penurunan
+   learning rate, fluktuasi val_macro_f1 pada 15 epoch terakhir mencapai
+   kurang lebih 0,036; dengan callback aktif menyempit menjadi kurang lebih
+   0,011 pada puncak yang setara.
+4. Nondeterminisme cuDNN berdampak nyata, sebagaimana diuraikan pada
+   bagian Determinisme dan Reproduktibilitas.
+
+Rerata fase eksplorasi dan rerata deterministik hampir identik (SAVEE 0,4136
+berbanding 0,4123; RAVDESS 0,4695 berbanding 0,4660), sehingga run eksplorasi
+tidak bias, hanya tidak dapat diverifikasi ulang.
+
 ## Validasi
 
 - [x] Konfigurasi tersimpan pada satu file dan dipakai seluruh skenario
@@ -279,7 +318,7 @@ Implementasi `ValidationSplitter` dikerjakan pada checkpoint 4.
 
 Status:
 
-🔄 Sedang dikerjakan
+✅ Completed
 
 ## Skenario
 
@@ -335,9 +374,9 @@ _(diisi setelah checkpoint dijalankan)_
 
 | Subset | Jumlah asli | Jumlah setelah augmentasi |
 |--------|-------------|---------------------------|
-| Train | | |
-| Validation | | (tanpa augmentasi) |
-| Test | | (tanpa augmentasi) |
+| Train | 3203 berkas asli | {'ravdess': 884, 'savee': 360, 'tess': 1959} |
+| Validation | 628 berkas asli | {'ravdess': 208, 'tess': 420} |
+| Test | 697 berkas asli | {'ravdess': 156, 'savee': 120, 'tess': 421} |
 
 ## Hasil
 
@@ -404,9 +443,9 @@ RM1 pada korpus yang sama, bukan terhadap angka gabungan.
 
 | Fold RM2 | Korpus uji | Baseline RM1 | Rentang RM1 | Sifat baseline |
 |----------|-----------|--------------|-------------|----------------|
-| 1 | SAVEE | 0,4087 | 0,3517-0,4580 | speaker-independent, sebanding |
-| 2 | TESS | 0,9995 | 0,9976-1,0000 | speaker-dependent, tidak sebanding |
-| 3 | RAVDESS | 0,4888 | 0,4581-0,5405 | speaker-independent, sebanding |
+| 1 | SAVEE | 0,4123 | 0,3490-0,4819 | speaker-independent, sebanding |
+| 2 | TESS | 0,9986 | 0,9976-1,0000 | speaker-dependent, tidak sebanding |
+| 3 | RAVDESS | 0,4660 | 0,4375-0,4981 | speaker-independent, sebanding |
 
 Penurunan hanya diklaim bermakna bila rentang antar-seed RM2 pada suatu fold
 tidak bertumpang tindih dengan rentang RM1 pada korpus yang sama. Uji
@@ -424,11 +463,13 @@ suatu populasi dan jumlahnya terlalu kecil.
 
 ## Output
 
-- `data/models/rm1/best_model.keras`
-- `data/models/rm1/training_log.csv`
-- `data/models/rm1/predictions.csv`
-- `data/models/rm1/metrics_summary.csv`
-- `data/models/rm1/metrics_per_class.csv`
+- `data/models/rm1/seed_42/` sampai `seed_46/`, masing-masing berisi
+  `best_model.keras`, `training_log.csv`, `predictions.csv`,
+  `metrics_summary.csv`, dan `metrics_per_class.csv`
+- `data/models/rm1/seed_summary.csv`
+- `data/models/logs/seed_*.log`
+
+Model of record untuk RM3 dan prototipe: `data/models/rm1/seed_42/best_model.keras`.
 
 ---
 
@@ -436,7 +477,7 @@ suatu populasi dan jumlahnya terlalu kecil.
 
 Status:
 
-⬜ Belum dikerjakan
+✅ Completed
 
 ## Skenario
 
@@ -458,14 +499,68 @@ speaker-independent untuk RAVDESS dan SAVEE, serta stratified untuk TESS.
 
 ## Hasil
 
-_(diisi setelah checkpoint dijalankan)_
+Tiga seed per fold, konfigurasi training identik dengan RM1.
 
-| Fold | Accuracy | Macro F1 | Selisih Macro F1 terhadap RM1 |
-|------|----------|----------|-------------------------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| Rata-rata | | | |
+| Fold | Uji | Seed 42 | Seed 43 | Seed 44 | Rerata | SD | Rentang |
+|------|-----|---------|---------|---------|--------|-----|---------|
+| 1 | SAVEE | 0,1191 | 0,1420 | 0,1297 | 0,1303 | 0,0115 | 0,1191-0,1420 |
+| 2 | TESS | 0,1543 | 0,2124 | 0,3320 | 0,2329 | 0,0906 | 0,1543-0,3320 |
+| 3 | RAVDESS | 0,1417 | 0,1201 | 0,1498 | 0,1372 | 0,0154 | 0,1201-0,1498 |
+
+## Temuan
+
+**Penurunan terjadi pada ketiga fold dengan besaran relatif serupa.**
+Penurunan relatif berkisar 68 sampai 77 persen meski nilai absolut baseline
+tiap korpus berbeda jauh. Kegagalan generalisasi karenanya tidak terikat
+pada satu kombinasi korpus tertentu, melainkan bersifat umum pada skema
+lintas-korpus.
+
+**Model runtuh menjadi penebak beberapa kelas.** Konsentrasi dua kelas
+teratas pada prediksi: fold 1 sebesar 89,2 persen, fold 3 sebesar 77,5
+persen, dan fold 2 sebesar 64,0 persen. Model tidak sekadar kurang akurat,
+melainkan kehilangan kemampuan membedakan tujuh kelas.
+
+| Fold | Korpus uji | Dua kelas dominan | Konsentrasi | Kelas ber-F1 nol |
+|------|-----------|-------------------|-------------|------------------|
+| 1 | SAVEE | Sad 60,2%, Fear 29,0% | 89,2% | Neutral |
+| 2 | TESS | Surprise 42,6%, Angry 21,4% | 64,0% | tidak ada |
+| 3 | RAVDESS | Happy 39,4%, Angry 38,1% | 77,5% | tidak ada |
+
+**Arah kolaps berbeda antar fold.** Fold 1 mengarah ke emosi berenergi
+rendah, sedangkan fold 3 ke emosi berenergi tinggi. Bila penyebabnya semata
+artefak arsitektur, arah kolapsnya akan sama. Perbedaan arah menunjukkan
+model mempelajari pemetaan energi akustik ke emosi yang spesifik terhadap
+kondisi rekaman korpus latihnya, lalu memaksakan pemetaan tersebut pada
+korpus uji dengan karakteristik berbeda.
+
+**Macro F1 fold 1 berada di bawah chance level meski accuracy di atasnya.**
+Accuracy 0,1708 melampaui chance 0,1429, tetapi macro F1 hanya 0,1191 karena
+merata-ratakan tujuh kelas dengan bobot sama dan kelas Neutral bernilai nol.
+Kondisi ini justru menunjukkan macro F1 bekerja sebagaimana mestinya sebagai
+metrik utama.
+
+**Fold 2 belum sepenuhnya konvergen.** Macro F1 validasi fold 2 hanya 0,4553
+sampai 0,5322, sementara fold 1 dan fold 3 di atas 0,89. Early stopping
+menghentikan fold 2 pada epoch 26 sampai 33, jauh lebih awal. Akibatnya
+variansi antar-seed fold 2 (SD 0,0906) enam sampai delapan kali lipat fold
+lain. Hal ini dilaporkan sebagai keterbatasan.
+
+**Metrik validasi internal fold 1 dan fold 3 terinflasi oleh TESS.**
+Keduanya di atas 0,89 karena data validasi internalnya memuat TESS yang
+praktis sempurna, mengulang pola yang sudah ditemukan pada RM1.
+
+### Perbandingan terhadap RM1
+
+| Fold | Korpus uji | RM1 | RM2 | Selisih | Penurunan relatif | Rentang tumpang tindih |
+|------|-----------|-----|-----|---------|-------------------|------------------------|
+| 1 | SAVEE | 0,4123 | 0,1303 | -0,2820 | -68,4% | tidak |
+| 2 | TESS | 0,9986 | 0,2329 | -0,7657 | -76,7% | tidak |
+| 3 | RAVDESS | 0,4660 | 0,1372 | -0,3288 | -70,6% | tidak |
+
+Ketiga fold berada di luar rentang antar-seed RM1, sehingga penurunannya
+bermakna menurut kriteria yang ditetapkan sebelum eksekusi.
+
+Sumber angka: `data/models/rm2/rm2_summary.csv`.
 
 ## Catatan Penafsiran
 
@@ -479,14 +574,18 @@ confound tambahan yang sudah dicatat pada subbab 3.4.
 
 ## Validasi
 
-- [ ] Korpus uji tiap fold tidak muncul sama sekali pada data latihnya
-- [ ] Ketiga fold memakai konfigurasi training yang identik
-- [ ] Validation internal tidak mengandung speaker yang sama dengan data latih
-- [ ] Macro F1 dilaporkan sebagai metrik utama, bukan accuracy
+- [x] Korpus uji tiap fold tidak muncul sama sekali pada data latihnya
+- [x] Ketiga fold memakai konfigurasi training yang identik
+- [x] Validation internal tidak mengandung speaker yang sama dengan data latih
+- [x] Seluruh korpus latih terwakili pada validation internal
+- [x] Macro F1 dilaporkan sebagai metrik utama, bukan accuracy
+- [x] Seed pemisahan validasi dikunci terpisah dari seed training
 
 ## Output
 
-- `data/models/rm2/fold_1/`, `fold_2/`, `fold_3/`
+- `data/models/rm2/fold_1/seed_42/` sampai `fold_3/seed_44/`
+- `data/models/rm2/rm2_summary.csv`
+- `validation_split.csv` pada tiap direktori seed
 
 ---
 
@@ -504,6 +603,36 @@ pernah dilihatnya (Opsi A, lihat Known Issues).
 
 Checkpoint ini tidak melakukan training sama sekali.
 `data/splits/rm3/train.csv` sengaja tidak dipakai.
+
+## Rencana Eksekusi
+
+Kelima model RM1 dievaluasi, bukan hanya seed 42. Evaluasi tidak memerlukan
+training sehingga biayanya mendekati nol, sementara estimasi variansi yang
+diperoleh menjadikan pelaporan RM3 setara dengan RM1 dan RM2. Model of
+record tetap seed 42.
+
+## Ruang Kelas dan Perhitungan Macro F1
+
+INESCO hanya memuat tiga kelas emosi, sedangkan model memiliki tujuh unit
+output. Macro F1 dihitung terhadap **tiga kelas target saja**, bukan tujuh.
+
+Alasannya, empat kelas yang tidak ada pada data uji memiliki support nol
+sehingga F1-nya selalu nol dan akan menyeret rerata ke bawah tanpa makna.
+Kesalahan berupa prediksi ke kelas di luar tiga kelas target tetap terhitung,
+yaitu lewat penurunan recall pada ketiga kelas target, sehingga tidak ada
+kesalahan yang luput dari pengukuran.
+
+## Baseline Pembanding
+
+| Pembanding | Nilai | Keterangan |
+|-----------|-------|------------|
+| Chance level mode 1 | 0,1429 | penebak acak tujuh kelas |
+| Chance level mode 2 | 0,3333 | penebak acak tiga kelas |
+| RM1 pada tiga kelas yang sama | dihitung ulang | dari `predictions.csv` RM1, dibatasi Angry, Happy, dan Sad |
+
+Baris ketiga merupakan pembanding paling sah, karena menyamakan ruang kelas
+antara RM1 dan RM3 sehingga selisihnya murni mencerminkan perpindahan
+bahasa, bukan perbedaan jumlah kelas.
 
 ## Dua Mode Pelaporan
 
@@ -577,6 +706,8 @@ siap dipakai pada Bab 4.
 | Tabel perbandingan RM1 vs RM2 vs RM3 | Selisih macro F1 | |
 | Analisis proporsi padding per korpus | RM2 | Menguji confound padding memakai kolom `real_frames` |
 | Diagram arsitektur CNN | Checkpoint 1 | Gambar untuk subbab 3.5 |
+| Metrik RM2 dibatasi pada berkas uji RM1 | RM2 tiga fold | Perbandingan setara terhadap RM1 |
+| Analisis arah kolaps prediksi | RM2 tiga fold | Distribusi prediksi dan kelas ber-F1 nol |
 
 Diagram arsitektur dibuat sebagai SVG orisinal, mengikuti pola diagram Bab 2,
 bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
@@ -616,6 +747,15 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 - Model of record adalah hasil seed 42; seed lain hanya untuk pelaporan
   variansi.
 - `class_weight` tidak dipakai, mengikuti mitigasi risiko R-02.
+- `enable_op_determinism` diaktifkan agar seed benar-benar menghasilkan
+  model yang sama, sesuai KNF-06.
+- Seed pemisahan validasi internal dikunci pada 42 dan terpisah dari seed
+  training, agar komposisi validasi identik pada seluruh seed dan variasi
+  antar-run murni berasal dari inisialisasi bobot.
+- Macro F1 pada RM3 dihitung terhadap tiga kelas target, bukan tujuh, agar
+  kelas bersupport nol tidak menyeret rerata.
+- Seluruh model RM1 dievaluasi pada RM3, bukan hanya model of record, karena
+  evaluasi tidak memerlukan training.
 
 ---
 
@@ -640,18 +780,18 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 
 ## Checkpoint 3 — RM1
 
-- [ ] Training
-- [ ] Evaluasi
-- [ ] Validasi anti-kebocoran
-- [ ] Penentuan jumlah seed
+- [x] Training
+- [x] Evaluasi
+- [x] Validasi anti-kebocoran
+- [x] Penentuan jumlah seed
 
 ## Checkpoint 4 — RM2
 
-- [ ] ValidationSplitter
-- [ ] Fold 1
-- [ ] Fold 2
-- [ ] Fold 3
-- [ ] Rekapitulasi
+- [x] ValidationSplitter
+- [x] Fold 1
+- [x] Fold 2
+- [x] Fold 3
+- [x] Rekapitulasi
 
 ## Checkpoint 5 — RM3
 
@@ -698,6 +838,14 @@ bukan memakai keluaran `keras.utils.plot_model`. Sumber angkanya adalah
 - Metrik validasi RM1 memiliki daya pisah rendah terhadap kemampuan
   lintas-speaker, sehingga titik henti early stopping bervariasi 27 sampai
   52 epoch pada tingkat skor validasi yang setara.
+- Data uji RM2 tidak identik dengan data uji RM1. Pada RM2, korpus uji
+  dipakai seluruhnya (SAVEE 480 berkas, RAVDESS 1.248, TESS 2.800),
+  sedangkan pada RM1 hanya sebagian (SAVEE 120, RAVDESS 156, TESS 421).
+  Perbandingan langsung karenanya tidak sepenuhnya setara. Ditangani pada
+  checkpoint 6 dengan menghitung ulang metrik RM2 yang dibatasi pada berkas
+  uji RM1, memakai kolom `filename` pada `predictions.csv`.
+- Model fold 2 RM2 belum sepenuhnya konvergen. Macro F1 validasinya hanya 0,4553 sampai 0,5322 dan early stopping berhenti pada epoch 26 sampai 33, sehingga variansi antar-seednya jauh lebih besar dari fold lain.
+- Tabel 3.1 pada Bab 3 menyebut RM1 dilatih pada gabungan RAVDESS dan SAVEE. Seharusnya RAVDESS, TESS, dan SAVEE. Perlu dikoreksi saat penulisan subbab 3.5.
 
 ---
 
@@ -718,6 +866,8 @@ Tahap Modeling menghasilkan:
 
 # 🚀 Next Session
 
-1. Implementasi prototipe Streamlit (RM4)
-2. Pengujian fungsional terhadap Tabel 3.5
-3. Pengukuran waktu respons sistem
+1. Checkpoint 5, evaluasi RM3 pada INESCO
+2. Checkpoint 6, analisis hasil dan gambar untuk Bab 4
+3. Implementasi prototipe Streamlit (RM4)
+4. Pengujian fungsional terhadap Tabel 3.5
+5. Revisi subbab 2.4.2 dan penambahan dasar teori yang belum ada
