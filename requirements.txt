@@ -1,0 +1,33 @@
+
+# Versi di bawah disamakan persis dengan lingkungan training di WSL2
+# (hasil pip freeze, 7 Agustus 2026). Kesamaan versi Keras adalah yang
+# paling kritis: berkas .keras menyimpan konfigurasi arsitektur dalam
+# format yang terikat versi Keras, sehingga perbedaan versi minor bisa
+# membuat load_model() gagal, atau lebih buruk, memuat model dengan
+# perilaku berbeda tanpa peringatan apa pun.
+#
+# Python di Streamlit Cloud harus dipilih 3.12 (Advanced settings),
+# menyesuaikan Python 3.12.3 di lingkungan lokal.
+ 
+# Paket lokal src/ser. Tanpa baris ini, `from ser.inference ...` di
+# app/main.py akan gagal di Streamlit Cloud, karena tidak ada yang
+# menjalankan `pip install -e .` di sana seperti di laptopmu.
+.
+ 
+streamlit==1.60.0
+ 
+# CATATAN PENTING soal TensorFlow:
+# Rencana awal memakai tensorflow-cpu, tetapi paket tensorflow-cpu belum
+# dirilis untuk versi 2.21.0 (rilis terakhirnya masih di seri 2.19/2.20),
+# sehingga pin tensorflow-cpu==2.21.0 akan gagal saat instalasi.
+# Dipakai tensorflow==2.21.0 agar identik dengan lingkungan training.
+# Sejak TensorFlow 2.16, paket `tensorflow` di Linux tidak lagi menarik
+# pustaka CUDA secara otomatis (dukungan GPU dipasang lewat ekstra
+# `tensorflow[and-cuda]`), sehingga instalasi di cloud tetap ramping.
+tensorflow==2.21.0
+keras==3.15.0
+ 
+librosa==0.11.0
+soundfile==0.14.0
+numpy==2.4.6
+scipy==1.18.0
