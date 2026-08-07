@@ -347,7 +347,7 @@ def render_usage_instructions():
     st.markdown(
         """
         <div class="usage-steps">
-            <p><b>Cara pakai:</b></p>
+            <p><b>Tutorial Penggunaan:</b></p>
             <p>1. Pilih salah satu: unggah berkas audio atau rekam suara langsung.</p>
             <p>2. Pastikan durasi 1-8 detik (paling pas 3-5 detik).</p>
             <p>3. Dengarkan dulu hasil rekaman atau berkas yang dipilih lewat pemutar audio.</p>
