@@ -52,6 +52,8 @@ logs/*
 *.npz
 *.h5
 *.keras
+# Hanya berkas ini yang dikecualikan, bukan seluruh model.
+!data/models/rm1/seed_42/best_model.keras
 *.tflite
 !data/features/.gitkeep
 

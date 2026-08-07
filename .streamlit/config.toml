@@ -1,0 +1,20 @@
+# Warna merah pada tab aktif dan tombol type="primary" BUKAN berasal dari
+# CSS di main.py, melainkan dari primaryColor bawaan Streamlit (#FF4B4B).
+# Menimpanya lewat CSS akan rapuh karena bergantung pada nama kelas
+# internal Streamlit yang berubah antar versi. Mengubahnya di sini adalah
+# cara yang didukung resmi dan berlaku ke seluruh komponen sekaligus.
+ 
+[theme]
+# Biru-teal: warna kontrol interaktif yang netral secara semantik.
+# Merah pada kontrol interaktif lazim dimaknai sebagai aksi destruktif
+# atau peringatan, sehingga tidak tepat untuk tombol aksi utama.
+primaryColor = "#2F6F8F"
+ 
+backgroundColor = "#EAF6FF"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#2B2B2B"
+ 
+# Ukuran font dasar. Tersedia pada Streamlit versi baru; kalau versimu
+# belum mendukung, pengaturan ini diabaikan tanpa error dan ukuran font
+# tetap ditangani oleh aturan CSS `html { font-size: ... }` di main.py.
+baseFontSize = 18
